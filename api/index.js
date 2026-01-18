@@ -11,7 +11,7 @@ app.use("/api/analyze", analyzeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/record", recordRoutes);
 
-// ⭐ สำคัญที่สุด ⭐
+
 export default function handler(req, res) {
   return app(req, res);
 }
