@@ -1,7 +1,19 @@
 {
+  "name": "betta-backend",
+  "private": true,
   "type": "module",
-  "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "build": "echo build",
+    "start": "echo start"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.10.0",
+    "multer": "^2.0.2",
+    "openai": "^4.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5"
   }
 }
