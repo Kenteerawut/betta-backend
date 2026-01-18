@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "api/index.js": {
-      "nodeVersion": "20.x"
-    }
-  },
   "routes": [
     {
       "src": "/api/(.*)",
@@ -11,11 +6,3 @@
     }
   ]
 }
-{
-  "functions": {
-    "api/index.js": {
-      "runtime": "nodejs20.x"
-    }
-  }
-}
-// redeploy trigger
