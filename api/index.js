@@ -5,11 +5,13 @@ import recordRoutes from "../routes/record.routes.js";
 
 const app = express();
 
-// middleware
 app.use(express.json());
 
 app.use("/api/analyze", analyzeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/record", recordRoutes);
 
-export default app;
+// ⭐ สำคัญที่สุด ⭐
+export default function handler(req, res) {
+  return app(req, res);
+}
