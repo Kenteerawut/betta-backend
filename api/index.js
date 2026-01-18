@@ -5,6 +5,7 @@ import recordRoutes from "../routes/record.routes.js";
 
 const app = express();
 
+// ✅ ต้องมี
 app.use(express.json());
 
 app.use("/api/analyze", analyzeRoutes);
