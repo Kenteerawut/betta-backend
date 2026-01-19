@@ -1,5 +1,5 @@
 import express from "express";
-import bcrypt from "bcryptjs"; // ✅ ใช้ bcryptjs เท่านั้น
+import bcrypt from "bcryptjs"; // ใช้ bcryptjs เท่านั้น
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
@@ -12,8 +12,7 @@ router.post("/register", async (req, res) => {
     await User.create({ email, password: hash });
     res.json({ ok: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "register_failed" });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -26,16 +25,19 @@ router.post("/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: "invalid" });
 
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ error: "JWT_SECRET missing" });
+    }
+
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
     res.json({ token });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "login_failed" });
+    res.status(500).json({ error: err.message });
   }
 });
 
