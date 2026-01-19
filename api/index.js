@@ -15,7 +15,7 @@ app.use("/api/analyze", analyzeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/record", recordRoutes);
 
-// สำคัญที่สุดสำหรับ Vercel
+// 🔴 สำคัญที่สุดสำหรับ Vercel
 export default function handler(req, res) {
   return app(req, res);
 }
