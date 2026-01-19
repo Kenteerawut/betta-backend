@@ -1,6 +1,6 @@
 import express from "express";
-import { authRequired } from "../middleware/auth.middleware.js";
-import FishRecord from "../models/FishRecord.js";
+import { authRequired } from "../../middleware/auth.middleware.js";
+import FishRecord from "../../models/FishRecord.js";
 
 const router = express.Router();
 
