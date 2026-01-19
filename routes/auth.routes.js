@@ -1,21 +1,25 @@
 import express from "express";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs"; // ✅ ใช้ bcryptjs เท่านั้น
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
 const router = express.Router();
 
+router.post("/register", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const hash = await bcrypt.hash(password, 10);
+    await User.create({ email, password: hash });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "register_failed" });
+  }
+});
+
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body || {};
-    if (!email || !password) {
-      return res.status(400).json({ error: "missing_fields" });
-    }
-
-    if (!process.env.JWT_SECRET) {
-      return res.status(500).json({ error: "jwt_not_configured" });
-    }
-
+    const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) return res.status(401).json({ error: "invalid" });
 
