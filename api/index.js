@@ -1,15 +1,21 @@
 import express from "express";
-import authRoutes from "../routes/auth.routes.js";
+import analyzeRoutes from "./routes/analyze.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import recordRoutes from "./routes/record.routes.js";
 
 const app = express();
 
 app.use(express.json());
 
-app.use("/api/auth", authRoutes);
-
-// health check
 app.get("/", (req, res) => {
   res.json({ ok: true });
 });
 
-export default app;
+app.use("/api/analyze", analyzeRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/record", recordRoutes);
+
+// ⭐⭐ สำคัญที่สุด ⭐⭐
+export default function handler(req, res) {
+  return app(req, res);
+}
