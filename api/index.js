@@ -1,7 +1,8 @@
 import express from "express";
-import analyzeRoutes from "./routes/analyze.routes.js";
-import authRoutes from "./routes/auth.routes.js";
-import recordRoutes from "./routes/record.routes.js";
+import analyzeRoutes from "../routes/analyze.routes.js";
+import authRoutes from "../routes/auth.routes.js";
+import recordRoutes from "../routes/record.routes.js";
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
