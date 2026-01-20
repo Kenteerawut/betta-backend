@@ -1,7 +1,7 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import User from "../../models/user.js";
+import User from "../../models/User.js";
 
 const router = express.Router();
 
@@ -20,15 +20,12 @@ router.post("/register", async (req, res) => {
     }
 
     const hashed = await bcrypt.hash(password, 10);
+    // หมายเหตุ: ใน model ของคุณ field คือ passwordHash
+    const user = await User.create({ email, passwordHash: hashed });
 
-    // schema ใช้ passwordHash
-    const newUser = await User.create({ email, passwordHash: hashed });
-
-    return res.json({ ok: true, userId: newUser._id });
+    return res.json({ ok: true, userId: user._id });
   } catch (err) {
-    return res
-      .status(500)
-      .json({ error: "register_failed", message: String(err) });
+    return res.status(500).json({ error: "register_failed", message: String(err) });
   }
 });
 
@@ -46,7 +43,6 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "invalid_credentials" });
     }
 
-    // schema ใช้ passwordHash
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) {
       return res.status(401).json({ error: "invalid_credentials" });
