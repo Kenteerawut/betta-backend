@@ -1,13 +1,66 @@
 import express from "express";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
 const router = express.Router();
 
-router.post("/register", (req, res) => {
-  res.json({ route: "register ok" });
+// POST /api/auth/register
+router.post("/register", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "missing_fields" });
+    }
+
+    const exists = await User.findOne({ email });
+    if (exists) {
+      return res.status(409).json({ error: "email_taken" });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await User.create({ email, password: hashed });
+
+    return res.json({ ok: true, userId: user._id });
+  } catch (err) {
+    return res.status(500).json({ error: "register_failed", message: String(err) });
+  }
 });
 
-router.post("/login", (req, res) => {
-  res.json({ route: "login ok" });
+// POST /api/auth/login
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "missing_fields" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ error: "invalid_credentials" });
+    }
+
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) {
+      return res.status(401).json({ error: "invalid_credentials" });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ error: "missing_jwt_secret" });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({ token });
+  } catch (err) {
+    return res.status(500).json({ error: "login_failed", message: String(err) });
+  }
 });
 
 export default router;

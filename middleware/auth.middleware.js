@@ -1,18 +1,18 @@
 import jwt from "jsonwebtoken";
 
-export const authRequired = (req, res, next) => {
+export function authRequired(req, res, next) {
   try {
-    const header = req.headers.authorization;
-    if (!header) return res.status(401).json({ error: "no_token" });
+    const header = req.headers.authorization || "";
+    const [type, token] = header.split(" ");
 
-    const token = header.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (type !== "Bearer" || !token) {
+      return res.status(401).json({ error: "missing_token" });
+    }
 
-    // เก็บข้อมูล user ไว้ใน req
-    req.user = decoded; // { userId, email, iat, exp }
-
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = payload; // { userId: ... }
     next();
   } catch (err) {
     return res.status(401).json({ error: "invalid_token" });
   }
-};
+}
