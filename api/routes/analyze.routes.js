@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { authRequired } from "../middleware/auth.middleware.js";
+import { authRequired } from "api/middleware/auth.middleware.js";
 import { analyzeBettaImage } from "../utils/openai.js";
 import FishRecord from "../models/FishRecord.js";
 
