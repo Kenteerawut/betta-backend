@@ -20,10 +20,16 @@ router.get("/", authRequired, async (req, res) => {
 // POST /api/record  → เพิ่ม record ใหม่ของ user
 router.post("/", authRequired, async (req, res) => {
   try {
-    const { fishName, type, color, note, imageUrl } = req.body;
+    // ✅ เพิ่ม imageName
+    const { fishName, type, color, note, imageUrl, imageName } = req.body;
 
     if (!fishName) {
       return res.status(400).json({ error: "missing_fishName" });
+    }
+
+    // ✅ เช็ค imageName เพราะใน schema required
+    if (!imageName) {
+      return res.status(400).json({ error: "missing_imageName" });
     }
 
     const doc = await FishRecord.create({
@@ -33,6 +39,7 @@ router.post("/", authRequired, async (req, res) => {
       color,
       note,
       imageUrl,
+      imageName, // ✅ ใส่เพิ่มตรงนี้
     });
 
     res.json({ ok: true, id: doc._id });
