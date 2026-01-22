@@ -9,23 +9,24 @@ import { connectDB } from "./db.js";
 const app = express();
 
 /**
- * ✅ CORS CONFIG (dev + production)
+ * ✅ CORS CONFIG (สำคัญมาก)
+ * - รองรับ Railway
+ * - รองรับ Mobile Safari / iOS
+ * - แก้ปัญหา "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้"
  */
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://bettafish-frontend-production.up.railway.app",
-    ],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
+    origin: true,          // ✅ อนุญาตทุก origin (แก้ปัญหา mobile)
+    credentials: true,     // ✅ จำเป็นถ้าใช้ Authorization / Cookie
   })
 );
 
-// รองรับ preflight (จำเป็นสำหรับ mobile)
+// ✅ รองรับ preflight (OPTIONS) สำหรับ POST/PUT บนมือถือ
 app.options("*", cors());
 
+/**
+ * ✅ JSON body
+ */
 app.use(express.json());
 
 /**
@@ -43,7 +44,7 @@ app.get("/api", (req, res) => {
 });
 
 /**
- * ✅ Routes (สำคัญมาก)
+ * ✅ Routes (ต้องตรงกับ frontend)
  */
 app.use("/api/analyze", analyzeRoutes);
 app.use("/api/auth", authRoutes);
