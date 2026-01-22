@@ -45,3 +45,4 @@ connectDB()
     console.error("DB connect failed:", err.message);
     process.exit(1);
   });
+console.log("🔥 BACKEND INDEX UPDATED", new Date().toISOString());
