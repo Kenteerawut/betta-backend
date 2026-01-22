@@ -9,7 +9,7 @@ import { connectDB } from "./db.js";
 const app = express();
 
 /**
- * CORS – อนุญาตทุก origin (แก้ iOS / Mobile Safari)
+ * ✅ CORS – รองรับ Railway + Mobile Safari (Express 5 compatible)
  */
 app.use(
   cors({
@@ -18,7 +18,8 @@ app.use(
   })
 );
 
-app.options("*", cors());
+// ❌ ห้ามใช้ app.options("*", cors()); ใน Express 5
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -38,11 +39,12 @@ const PORT = process.env.PORT || 3000;
 connectDB()
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`🚀 Server running on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error("DB connect failed:", err.message);
+    console.error("❌ DB connect failed:", err.message);
     process.exit(1);
   });
+
 console.log("🔥 BACKEND INDEX UPDATED", new Date().toISOString());
