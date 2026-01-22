@@ -9,7 +9,7 @@ import { connectDB } from "./db.js";
 const app = express();
 
 /**
- * ✅ CORS CONFIG (รองรับ dev + production)
+ * ✅ CORS CONFIG (dev + production)
  */
 app.use(
   cors({
@@ -23,7 +23,7 @@ app.use(
   })
 );
 
-// รองรับ preflight (สำคัญมากบนมือถือ)
+// รองรับ preflight (จำเป็นสำหรับ mobile)
 app.options("*", cors());
 
 app.use(express.json());
@@ -43,6 +43,24 @@ app.get("/api", (req, res) => {
 });
 
 /**
- * ✅ Routes
+ * ✅ Routes (สำคัญมาก)
  */
-ap
+app.use("/api/analyze", analyzeRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/records", recordRoutes); // ✅ ใช้ records ให้ตรง frontend
+
+/**
+ * ✅ Start server
+ */
+const PORT = process.env.PORT || 3000;
+
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("❌ DB connect failed:", err.message);
+    process.exit(1);
+  });
