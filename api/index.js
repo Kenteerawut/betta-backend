@@ -16,17 +16,15 @@ const app = express();
  */
 app.use(
   cors({
-    origin: true,          // ✅ อนุญาตทุก origin (แก้ปัญหา mobile)
-    credentials: true,     // ✅ จำเป็นถ้าใช้ Authorization / Cookie
+    origin: true,          // อนุญาตทุก origin (mobile + production)
+    credentials: true,     // จำเป็นสำหรับ Authorization header
   })
 );
 
-// ✅ รองรับ preflight (OPTIONS) สำหรับ POST/PUT บนมือถือ
+// รองรับ preflight (OPTIONS) สำหรับ POST/PUT บนมือถือ
 app.options("*", cors());
 
-/**
- * ✅ JSON body
- */
+// JSON body
 app.use(express.json());
 
 /**
@@ -44,11 +42,11 @@ app.get("/api", (req, res) => {
 });
 
 /**
- * ✅ Routes (ต้องตรงกับ frontend)
+ * ✅ Routes (ต้องตรง frontend)
  */
 app.use("/api/analyze", analyzeRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/records", recordRoutes); // ✅ ใช้ records ให้ตรง frontend
+app.use("/api/records", recordRoutes);
 
 /**
  * ✅ Start server
