@@ -8,38 +8,41 @@ import { connectDB } from "./db.js";
 
 const app = express();
 
-// ✅ CORS (สำคัญมากสำหรับ frontend)
+/**
+ * ✅ CORS CONFIG (รองรับ dev + production)
+ */
 app.use(
   cors({
     origin: [
-      "http://localhost:3000", // ตอน dev
+      "http://localhost:3000",
+      "https://bettafish-frontend-production.up.railway.app",
     ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
+
+// รองรับ preflight (สำคัญมากบนมือถือ)
+app.options("*", cors());
 
 app.use(express.json());
 
-// ✅ health check
-app.get("/", (req, res) => res.send("Betta Backend is running"));
+/**
+ * ✅ Health check
+ */
+app.get("/", (req, res) => {
+  res.send("Betta Backend is running");
+});
 
-// ✅ API root (กันงงเวลาเปิด /api)
-app.get("/api", (req, res) =>
-  res.json({ ok: true, message: "API running on Railway" })
-);
+/**
+ * ✅ API root
+ */
+app.get("/api", (req, res) => {
+  res.json({ ok: true, message: "API running on Railway" });
+});
 
-app.use("/api/analyze", analyzeRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/record", recordRoutes);
-
-const PORT = process.env.PORT || 3000;
-
-connectDB()
-  .then(() => {
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  })
-  .catch((err) => {
-    console.error("DB connect failed:", err.message);
-    process.exit(1);
-  });
+/**
+ * ✅ Routes
+ */
+ap
