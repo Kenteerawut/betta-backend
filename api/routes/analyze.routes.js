@@ -8,45 +8,49 @@ const router = express.Router();
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// POST /api/analyze  (วิเคราะห์ + บันทึก record อัตโนมัติ)
+// POST /api/analyze
 router.post("/", authRequired, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "no_file" });
     }
 
-    // 1) แปลงรูปเป็น base64 ส่งให้ OpenAI
-    const base64Image = req.file.buffer.toString("base64");
-    const result = await analyzeBettaImage(base64Image);
+    // 🔹 รับคำถามจาก frontend
+    const question = req.body.question || "";
 
-    // 2) เตรียมข้อมูลสำหรับบันทึก Record
-    // หมายเหตุ: ปรับ mapping ให้เข้ากับ format result ของคุณได้
+    // 🔹 แปลงรูปเป็น base64
+    const base64Image = req.file.buffer.toString("base64");
+
+    // 🔹 ส่งรูป + คำถามเข้า AI
+    const result = await analyzeBettaImage({
+      imageBase64: base64Image,
+      question,
+    });
+
+    // 🔹 map ข้อมูลสำหรับบันทึก
     const fishName = result?.fishName || "";
     const type = result?.type || "";
     const color = result?.color || "";
-    const note = result?.note || "";
+    const note = result?.answer || "";
 
-    // 3) บันทึกลง MongoDB
     const doc = await FishRecord.create({
       userId: req.user.userId,
-
       fishName,
       type,
       color,
       note,
-
-      imageName: req.file.originalname, // required
-      imageUrl: "", // ตอนนี้ยังไม่ได้อัปโหลดไป storage ภายนอก
+      imageName: req.file.originalname,
+      imageUrl: "",
     });
 
-    // 4) ส่งผลกลับให้ frontend
     res.json({
       ok: true,
       recordId: doc._id,
-      result,
+      answer: result.answer,
+      raw: result,
     });
   } catch (err) {
     res.status(500).json({

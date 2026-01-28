@@ -4,6 +4,8 @@ import cors from "cors";
 import analyzeRoutes from "./routes/analyze.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import recordRoutes from "./routes/record.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
+
 import { connectDB } from "./db.js";
 
 const app = express();
@@ -18,22 +20,35 @@ app.use(
   })
 );
 
-// ❌ ห้ามใช้ app.options("*", cors()); ใน Express 5
+// ❌ Express 5 ไม่ต้องใช้ app.options("*")
 
 app.use(express.json());
 
+/**
+ * ✅ Health check
+ */
 app.get("/", (req, res) => {
   res.send("Betta Backend is running");
 });
 
+/**
+ * ✅ API root
+ */
 app.get("/api", (req, res) => {
   res.json({ ok: true, message: "API running on Railway" });
 });
 
+/**
+ * ✅ Routes
+ */
 app.use("/api/analyze", analyzeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/records", recordRoutes);
+app.use("/api/chat", chatRoutes); // ✅ CHAT STREAMING
 
+/**
+ * ✅ Start server
+ */
 const PORT = process.env.PORT || 3000;
 
 connectDB()
