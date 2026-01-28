@@ -1,88 +1,71 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
+const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function analyzeBettaImage({ imageBase64, question }) {
-  const systemPrompt = `
-คุณคือผู้เชี่ยวชาญด้านปลากัด (Betta Fish) เท่านั้น
-
-กฎสำคัญ:
-- ตอบเฉพาะเรื่องปลากัด: สายพันธุ์ อาการป่วย การรักษา การเลี้ยง
-- ถ้าคำถามไม่เกี่ยวกับปลากัด ให้ตอบว่า:
-  "ขออภัย ระบบนี้ตอบได้เฉพาะเรื่องปลากัดเท่านั้น"
-- ห้ามตอบเรื่องอื่นเด็ดขาด
-- ตอบเป็นภาษาไทย เข้าใจง่าย
-`;
-
-  const userPrompt = `
-คำถามจากผู้ใช้:
-${question || "ช่วยวิเคราะห์ปลากัดจากภาพ"}
-`;
-
-  const res = await openai.responses.create({
+/**
+ * วิเคราะห์รูปปลากัด
+ */
+export async function analyzeBettaImage(base64Image) {
+  const response = await client.chat.completions.create({
     model: "gpt-4.1-mini",
-    input: [
+    messages: [
       {
         role: "system",
-        content: systemPrompt,
+        content:
+          "คุณคือผู้เชี่ยวชาญปลากัด วิเคราะห์เฉพาะเรื่องปลากัดเท่านั้น",
       },
       {
         role: "user",
         content: [
-          { type: "input_text", text: userPrompt },
           {
-            type: "input_image",
-            image_base64: imageBase64,
+            type: "text",
+            text: "ช่วยวิเคราะห์ปลากัดจากภาพนี้ บอกสายพันธุ์ ลักษณะสี และคำแนะนำการเลี้ยง",
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:image/jpeg;base64,${base64Image}`,
+            },
           },
         ],
       },
     ],
   });
 
-  const answer =
-    res.output_text ||
-    res.output?.[0]?.content?.[0]?.text ||
-    "ไม่สามารถวิเคราะห์ได้";
-
-  return { answer };
+  // ควร normalize output ตรงนี้ตามที่คุณใช้
+  return {
+    species_name: response.choices[0].message.content,
+    color_traits: "",
+    care_tips: "",
+  };
 }
-import OpenAI from "openai";
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 /**
- * Chat เฉพาะเรื่องปลากัด
+ * ตอบคำถามแชท (เฉพาะเรื่องปลากัด)
  */
-export async function chatAboutBetta({ question, context }) {
-  const systemPrompt = `
-คุณคือผู้เชี่ยวชาญด้านปลากัด (Betta fish)
-- ตอบได้เฉพาะเรื่องปลากัด การเลี้ยง โรค อาการ การรักษา
-- ถ้าคำถามไม่เกี่ยวกับปลากัด ให้ตอบว่า "ผมสามารถตอบได้เฉพาะเรื่องปลากัดเท่านั้น"
-- ตอบเป็นภาษาไทย
-`;
+export async function chatAboutBetta(question, context) {
+  const response = await client.chat.completions.create({
+    model: "gpt-4.1-mini",
+    messages: [
+      {
+        role: "system",
+        content:
+          "คุณคือผู้เชี่ยวชาญปลากัด ตอบเฉพาะเรื่องปลากัดเท่านั้น ถ้าไม่เกี่ยวให้ปฏิเสธสุภาพ",
+      },
+      {
+        role: "user",
+        content: `
+ข้อมูลปลากัด:
+${JSON.stringify(context, null, 2)}
 
-  const messages = [
-    { role: "system", content: systemPrompt },
-    ...(context
-      ? [
-          {
-            role: "assistant",
-            content: `ข้อมูลปลาก่อนหน้า: ${JSON.stringify(context)}`,
-          },
-        ]
-      : []),
-    { role: "user", content: question },
-  ];
-
-  const res = await client.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages,
-    temperature: 0.4,
+คำถาม:
+${question}
+        `,
+      },
+    ],
   });
 
-  return res.choices[0].message.content;
+  return response.choices[0].message.content;
 }
