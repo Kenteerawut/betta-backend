@@ -18,41 +18,42 @@ router.post("/", authRequired, upload.single("image"), async (req, res) => {
       return res.status(400).json({ error: "no_file" });
     }
 
-    // 🔹 รับคำถามจาก frontend
     const question = req.body.question || "";
-
-    // 🔹 แปลงรูปเป็น base64
     const base64Image = req.file.buffer.toString("base64");
 
-    // 🔹 ส่งรูป + คำถามเข้า AI
-    const result = await analyzeBettaImage({
+    // 🔥 เรียก AI
+    const ai = await analyzeBettaImage({
       imageBase64: base64Image,
       question,
     });
 
-    // 🔹 map ข้อมูลสำหรับบันทึก
-    const fishName = result?.fishName || "";
-    const type = result?.type || "";
-    const color = result?.color || "";
-    const note = result?.answer || "";
+    // 🔥 map ให้ตรง frontend
+    const result = {
+      species_name: ai?.fishName || "",
+      color_traits: ai?.color || "",
+      care_tips: ai?.answer || "",
+    };
 
+    // 🔥 บันทึก DB
     const doc = await FishRecord.create({
       userId: req.user.userId,
-      fishName,
-      type,
-      color,
-      note,
+      fishName: ai?.fishName || "",
+      type: ai?.type || "",
+      color: ai?.color || "",
+      note: ai?.answer || "",
       imageName: req.file.originalname,
       imageUrl: "",
     });
 
+    // ✅ IMPORTANT: ต้องมี result
     res.json({
       ok: true,
       recordId: doc._id,
-      answer: result.answer,
-      raw: result,
+      result,
     });
+
   } catch (err) {
+    console.error("ANALYZE ERROR:", err); // ⭐ เพิ่ม log ไว้ดู Railway
     res.status(500).json({
       error: "analyze_failed",
       message: String(err),
