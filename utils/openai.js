@@ -17,16 +17,19 @@ export async function analyzeBettaImage({
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
       input: [
+        // ⭐ SYSTEM ROLE
         {
           role: "system",
           content: [
             {
               type: "input_text",
               text:
-                "คุณคือผู้เชี่ยวชาญปลากัด ต้องตอบ JSON เท่านั้น ห้ามอธิบายนอกโครงสร้าง",
+                "คุณคือผู้เชี่ยวชาญปลากัดระดับโลก ต้องตอบ JSON เท่านั้น ห้ามมี ```json",
             },
           ],
         },
+
+        // ⭐ USER ROLE
         {
           role: "user",
           content: [
@@ -34,7 +37,25 @@ export async function analyzeBettaImage({
               type: "input_text",
               text:
                 question ||
-                "วิเคราะห์ปลากัดจากภาพนี้ และตอบเป็น JSON: {species_name,color_traits,grade,analysis}",
+                `
+วิเคราะห์ปลากัดจากภาพนี้
+
+ตอบเป็น JSON เท่านั้น:
+
+{
+  "main_species_th": "",
+  "main_species_en": "",
+  "sub_species": "",
+  "tail_type": "",
+  "color_traits": "",
+  "grade": "",
+  "confidence_score": 0,
+  "analysis": ""
+}
+
+ตัวอย่างสายพันธุ์ที่ต้องเลือก:
+ปลากัดแฟนซี, ฮาฟมูน, คราวน์เทล, ปลากัดจีน, ปลากัดป่า, ปลากัดหม้อ, Plakat, Fancy Betta
+`,
             },
             {
               type: "input_image",
@@ -45,23 +66,18 @@ export async function analyzeBettaImage({
       ],
     });
 
-    const text = res.output_text || "{}";
+    let text = res.output_text || "";
 
-    let data = {};
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = {
-        species_name: "ไม่สามารถระบุ",
-        color_traits: "-",
-        grade: "-",
-        analysis: text,
-      };
-    }
+    // 🔥 ลบ ```json
+    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+
+    const data = JSON.parse(text);
+
+    console.log("✅ PARSED JSON =", data);
 
     return data;
   } catch (err) {
     console.error("🔥 OPENAI ERROR:", err);
     throw err;
   }
-}
+};
