@@ -21,8 +21,6 @@ app.use(
   })
 );
 
-// ❌ Express 5 ไม่ต้องใช้ app.options("*")
-
 app.use(express.json());
 
 /**
@@ -45,7 +43,7 @@ app.get("/api", (req, res) => {
 app.use("/api/analyze", analyzeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/records", recordRoutes);
-app.use("/api/chat", chatRoutes); // ✅ CHAT STREAMING
+app.use("/api/chat", chatRoutes);
 
 /**
  * ✅ Start server
