@@ -21,11 +21,10 @@ router.post("/", authRequired, upload.single("image"), async (req, res) => {
 
     console.log("🔥 analyze start");
 
-   const result = await analyzeBettaImage({
-  imageBase64: base64Image,
-  mimeType: req.file.mimetype,
-  question,
-});
+    const result = await analyzeBettaImage({
+      imageBase64: base64Image,
+      question: req.body.question || "",
+    });
 
     console.log("🔥 AI RESULT:", result);
 
@@ -44,7 +43,7 @@ router.post("/", authRequired, upload.single("image"), async (req, res) => {
       imageName: req.file.originalname,
       imageUrl: "",
     });
-เระ
+
     res.json({
       ok: true,
       recordId: doc._id,
