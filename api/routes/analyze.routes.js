@@ -45,11 +45,11 @@ router.post("/", authRequired, upload.single("image"), async (req, res) => {
     });
 
     res.json({
-      ok: true,
-      recordId: doc._id,
-      answer: result.answer || "no_answer",
-      raw: result,
-    });
+  ok: true,
+  result,
+  recordId: doc._id,
+});
+
   } catch (err) {
     console.error("🔥 ANALYZE ERROR:", err);
 

@@ -12,18 +12,29 @@ export async function analyzeBettaImage({
   try {
     console.log("🔥 PRO ANALYZE START");
 
-    // ⭐ ต้องมี backtick
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
       input: [
         {
+          role: "system",
+          content: [
+            {
+              type: "input_text",
+              text:
+                "คุณคือผู้เชี่ยวชาญปลากัด ต้องตอบ JSON เท่านั้น ห้ามอธิบายนอกโครงสร้าง",
+            },
+          ],
+        },
+        {
           role: "user",
           content: [
             {
               type: "input_text",
-              text: question || "วิเคราะห์ปลากัดจากภาพนี้",
+              text:
+                question ||
+                "วิเคราะห์ปลากัดจากภาพนี้ และตอบเป็น JSON: {species_name,color_traits,grade,analysis}",
             },
             {
               type: "input_image",
@@ -34,9 +45,21 @@ export async function analyzeBettaImage({
       ],
     });
 
-    return {
-      answer: res.output_text,
-    };
+    const text = res.output_text || "{}";
+
+    let data = {};
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = {
+        species_name: "ไม่สามารถระบุ",
+        color_traits: "-",
+        grade: "-",
+        analysis: text,
+      };
+    }
+
+    return data;
   } catch (err) {
     console.error("🔥 OPENAI ERROR:", err);
     throw err;
