@@ -1,3 +1,9 @@
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
 export async function analyzeBettaImage({
   imageBase64,
   mimeType = "image/jpeg",
@@ -6,7 +12,7 @@ export async function analyzeBettaImage({
   try {
     console.log("🔥 PRO ANALYZE START");
 
-    // ✅ ต้องมี backtick
+    // ⭐ ต้องมี backtick
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     const res = await openai.responses.create({
@@ -28,10 +34,8 @@ export async function analyzeBettaImage({
       ],
     });
 
-    console.log("🔥 PRO ANALYZE SUCCESS");
-
     return {
-      answer: res.output_text || "",
+      answer: res.output_text,
     };
   } catch (err) {
     console.error("🔥 OPENAI ERROR:", err);
