@@ -11,49 +11,48 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// POST /api/analyze
 router.post("/", authRequired, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "no_file" });
     }
 
-    const question = req.body.question || "";
     const base64Image = req.file.buffer.toString("base64");
 
-    // 🔥 เรียก AI
-    const ai = await analyzeBettaImage({
+    console.log("🔥 analyze start");
+
+    const result = await analyzeBettaImage({
       imageBase64: base64Image,
-      question,
+      question: req.body.question || "",
     });
 
-    // 🔥 map ให้ตรง frontend
-    const result = {
-      species_name: ai?.fishName || "",
-      color_traits: ai?.color || "",
-      care_tips: ai?.answer || "",
-    };
+    console.log("🔥 AI RESULT:", result);
 
-    // 🔥 บันทึก DB
+    if (!result) {
+      return res.status(500).json({
+        error: "ai_no_result",
+      });
+    }
+
     const doc = await FishRecord.create({
       userId: req.user.userId,
-      fishName: ai?.fishName || "",
-      type: ai?.type || "",
-      color: ai?.color || "",
-      note: ai?.answer || "",
+      fishName: result.fishName || "",
+      type: result.type || "",
+      color: result.color || "",
+      note: result.answer || "",
       imageName: req.file.originalname,
       imageUrl: "",
     });
 
-    // ✅ IMPORTANT: ต้องมี result
     res.json({
       ok: true,
       recordId: doc._id,
-      result,
+      answer: result.answer || "no_answer",
+      raw: result,
     });
-
   } catch (err) {
-    console.error("ANALYZE ERROR:", err); // ⭐ เพิ่ม log ไว้ดู Railway
+    console.error("🔥 ANALYZE ERROR:", err);
+
     res.status(500).json({
       error: "analyze_failed",
       message: String(err),
