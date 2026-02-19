@@ -4,12 +4,30 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+/**
+ * ⭐ MAP ไทย (Educational Mode)
+ */
+const tailMapTH = {
+  Halfmoon: "หางครึ่งวงกลม",
+  Crowntail: "หางมงกุฎ",
+  Plakat: "หางสั้น",
+  Doubletail: "หางคู่",
+  "Wild Form": "ทรงป่า",
+  Unknown: "ไม่ทราบ",
+};
+
+const traitMapTH = {
+  "Dumbo Ear": "หูช้าง",
+  Giant: "ปลากัดยักษ์",
+  Normal: "ปกติ",
+};
+
 export async function analyzeBettaImage({
   imageBase64,
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 THAI BETTA PRO MAX V5 START");
+    console.log("🔥 THAI BETTA PRO MAX V6 START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
@@ -29,10 +47,7 @@ export async function analyzeBettaImage({
               text: `
 คุณคือ Morphology Classifier ปลากัด
 
-ดูเฉพาะรูปทรงหางเท่านั้น
-
-เลือกได้เท่านั้น:
-
+เลือกได้:
 Plakat
 Halfmoon
 Crowntail
@@ -57,22 +72,21 @@ Unknown
       ],
     });
 
-    const tailType = (classify.output_text ?? "Unknown").trim();
+    const tailTypeEN = (classify.output_text ?? "Unknown").trim();
 
-    console.log("🐟 LOCKED tail_type =", tailType);
+    console.log("🐟 tail_type =", tailTypeEN);
 
     /**
      * ==========================
-     * STEP 2 — TAXONOMY ANALYZER (SCHEMA LOCK)
+     * STEP 2 — TAXONOMY ANALYZER
      * ==========================
      */
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
-
       response_format: {
         type: "json_schema",
         json_schema: {
-          name: "thai_betta_taxonomy",
+          name: "thai_betta_v6",
           schema: {
             type: "object",
             additionalProperties: false,
@@ -81,7 +95,7 @@ Unknown
               main_species_en: { type: "string" },
               breed_category_th: { type: "string" },
               breed_category_en: { type: "string" },
-              tail_type: { type: "string" },
+              special_trait_en: { type: "string" },
               color_traits: { type: "string" },
               grade: { type: "string" },
               confidence_score: { type: "number" },
@@ -92,7 +106,7 @@ Unknown
               "main_species_en",
               "breed_category_th",
               "breed_category_en",
-              "tail_type",
+              "special_trait_en",
               "color_traits",
               "grade",
               "confidence_score",
@@ -101,7 +115,6 @@ Unknown
           },
         },
       },
-
       input: [
         {
           role: "system",
@@ -109,22 +122,15 @@ Unknown
             {
               type: "input_text",
               text: `
-คุณคือ Thai Betta Taxonomy Specialist
+คุณคือ Thai Betta Specialist
 
-tail_type ถูกล็อกแล้วคือ: ${tailType}
+tail_type ถูกล็อกแล้วคือ: ${tailTypeEN}
 
-กฎสำคัญ:
-
-- tail_type ห้ามเปลี่ยน
-- Halfmoon / Crowntail / Plakat = รูปทรงหาง ไม่ใช่สายพันธุ์
-- ต้องเลือกสายพันธุ์หลักแบบไทย เช่น:
-  ปลากัดหม้อ
-  ปลากัดจีน
-  ปลากัดมหาชัย
-  ปลากัดป่า
-  ไม่สามารถระบุได้
-
-ถ้าไม่มั่นใจ ห้าม confidence เกิน 70
+ต้องตอบชื่อสายพันธุ์แบบไทย เช่น:
+ปลากัดหม้อ
+ปลากัดจีน
+ปลากัดมหาชัย
+ปลากัดป่า
 `,
             },
           ],
@@ -141,29 +147,42 @@ tail_type ถูกล็อกแล้วคือ: ${tailType}
       ],
     });
 
-    const data = res.output[0].content[0].json;
+    /**
+     * ⭐ FIX รองรับ SDK ทุกเวอร์ชัน (กัน Railway 500)
+     */
+    let data;
+
+    if (res.output?.[0]?.content?.[0]?.json) {
+      data = res.output[0].content[0].json;
+    } else {
+      let text = res.output_text ?? "";
+      text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+      data = JSON.parse(text);
+    }
 
     /**
      * ==========================
-     * CONFIDENCE ENGINE
+     * EDUCATIONAL MODE — เติมภาษาไทย
      * ==========================
      */
+    data.tail_type_en = tailTypeEN;
+    data.tail_type_th = tailMapTH[tailTypeEN] || "ไม่ทราบ";
+
+    data.special_trait_th =
+      traitMapTH[data.special_trait_en] || "ไม่ระบุ";
+
+    /**
+     * CONFIDENCE ENGINE
+     */
     if (!data.confidence_score || data.confidence_score < 25) {
-      data.confidence_score = 65;
+      data.confidence_score = 70;
     }
 
-    if (tailType === "Unknown" && data.confidence_score > 60) {
-      data.confidence_score = 60;
-    }
-
-    // ⭐ Inject locked tail_type
-    data.tail_type = tailType;
-
-    console.log("✅ PRO MAX V5 RESULT =", data);
+    console.log("✅ PRO MAX V6 RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 PRO MAX V5 ERROR:", err);
+    console.error("🔥 PRO MAX V6 ERROR:", err);
     throw err;
   }
 }
