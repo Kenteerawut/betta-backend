@@ -5,8 +5,8 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧬 BETTA AI V5 ULTRA FINAL
- * FINAL JUDGE ENGINE — Academic Stable Version
+ * 🧠 V7 DEFENSE MODE — NEAR REAL JUDGE
+ * เป้าหมาย: ให้ใกล้ reasoning แบบ ChatGPT มากที่สุด
  */
 
 export async function analyzeBettaImage({
@@ -14,13 +14,17 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 BETTA V5 ULTRA FINAL START");
+    console.log("🔥 V7 DEFENSE MODE START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
-    const res = await openai.responses.create({
+    /**
+     * ===============================
+     * STEP 1 — MORPHOLOGY LOCK
+     * ===============================
+     */
+    const classify = await openai.responses.create({
       model: "gpt-4.1-mini",
-
       input: [
         {
           role: "system",
@@ -28,66 +32,77 @@ export async function analyzeBettaImage({
             {
               type: "input_text",
               text: `
-คุณคือ Betta Taxonomy Judge Engine (ULTRA FINAL)
+คุณคือ Morphology Classifier ปลากัด
 
-ให้วิเคราะห์ปลากัดแบบวิชาการ โดยแยกเป็น 3 Layer
+วิเคราะห์เฉพาะโครงสร้าง:
 
-==========================
-LAYER 1 — MAIN SPECIES
-==========================
-เลือกได้เท่านั้น:
+- Long Fin
+- Short Fin
+- Crowntail Spine
+- Halfmoon Spread
+- Wild Body
 
-- ปลากัดป่า (Wild Betta)
-- ปลากัดหม้อ (Plakat Thai)
-- ปลากัดจีน (Chinese Betta)
-- ปลากัดแฟนซี (Fancy Betta)
-- ไม่สามารถระบุได้
+ตอบเป็น TEXT:
 
-กฎสำคัญ:
-- ถ้าลำตัวเรียว dorsal เล็ก → Wild Betta
-- ห้ามจัด Wild เป็น Fancy
+Long Fin
+Short Fin
+Crowntail
+Halfmoon
+Wild Form
+Unknown
+`,
+            },
+          ],
+        },
+        {
+          role: "user",
+          content: [{ type: "input_image", image_url: imageDataUrl }],
+        },
+      ],
+    });
 
-==========================
-LAYER 2 — TAIL TYPE
-==========================
-- Halfmoon
-- Crowntail
-- Plakat
-- Doubletail
-- Veiltail
-- Wild Form
+    const morph = (classify.output_text || "Unknown").trim();
+    console.log("🧬 Morphology =", morph);
 
-ห้ามเอา tail type ไปเป็นสายพันธุ์
+    /**
+     * ===============================
+     * STEP 2 — FINAL JUDGE
+     * ===============================
+     */
+    const res = await openai.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        {
+          role: "system",
+          content: [
+            {
+              type: "input_text",
+              text: `
+คุณคือ Thai Betta Judge (Defense Mode)
 
-==========================
-LAYER 3 — SPECIAL TRAIT
-==========================
-ตรวจสอบครีบอก:
+Morphology ถูกล็อกแล้ว = ${morph}
 
-ถ้าครีบอกใหญ่ผิดปกติ
-ให้ special_trait_en = "Dumbo Ear"
+กฎ:
 
-เลือกได้:
-- Dumbo Ear
-- Giant
-- Alien
-- Metallic
-- None
+1) Long Fin → ห้ามตอบปลากัดหม้อ
+2) Wild Form → ห้ามตอบ Fancy
+3) Halfmoon → จัดเป็น Show Betta
+4) Crowntail → ปลากัดประกวด
 
-==========================
-กฎการวิเคราะห์
-==========================
-1) Morphology > Tail > Trait > Color
-2) ห้ามใช้คำว่า Fancy ถ้ามีโครงสร้าง Wild ชัด
-3) ถ้าไม่มั่นใจให้ confidence ไม่เกิน 70
+สายพันธุ์ไทยที่เลือกได้:
 
-ตอบ JSON เท่านั้น:
+ปลากัดหม้อ
+ปลากัดจีน
+ปลากัดมหาชัย
+ปลากัดป่า
+ปลากัดประกวด
+ไม่สามารถระบุได้
+
+ตอบ JSON:
 
 {
 "main_species_th":"",
 "main_species_en":"",
-"tail_type_en":"",
-"special_trait_en":"",
 "breed_category_th":"",
 "breed_category_en":"",
 "color_traits":"",
@@ -101,46 +116,57 @@ LAYER 3 — SPECIAL TRAIT
         },
         {
           role: "user",
-          content: [
-            {
-              type: "input_image",
-              image_url: imageDataUrl,
-            },
-          ],
+          content: [{ type: "input_image", image_url: imageDataUrl }],
         },
       ],
     });
 
-    // ⭐ SAFE PARSE (กัน Railway crash)
-    let text = res.output_text || "";
-    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-
-    const data = JSON.parse(text);
-
     /**
-     * 🛡️ SAFETY ENGINE
-     * กัน confidence เพี้ยน
+     * ===============================
+     * SAFE PARSE
+     * ===============================
      */
-    if (!data.confidence_score || data.confidence_score < 30) {
-      data.confidence_score = 68;
+    let data;
+
+    if (res.output?.[0]?.content?.[0]?.json) {
+      data = res.output[0].content[0].json;
+    } else {
+      let text = res.output_text || "";
+      text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+      data = JSON.parse(text);
     }
 
     /**
-     * 🛡️ WILD LOCK
+     * ===============================
+     * DEFENSE MODE BIO FIX
+     * ===============================
      */
-    if (
-      data.tail_type_en === "Wild Form" &&
-      data.main_species_en === "Fancy Betta"
-    ) {
+
+    // Inject morphology
+    data.morphology = morph;
+
+    // ⭐ Long Fin → กัน Plakat
+    if (morph === "Long Fin" && data.main_species_th === "ปลากัดหม้อ") {
+      data.main_species_th = "ปลากัดประกวด";
+      data.main_species_en = "Show Betta";
+    }
+
+    // ⭐ Wild Lock
+    if (morph === "Wild Form") {
       data.main_species_th = "ปลากัดป่า";
       data.main_species_en = "Wild Betta";
     }
 
-    console.log("✅ BETTA V5 RESULT =", data);
+    // ⭐ Confidence normalization
+    if (!data.confidence_score || data.confidence_score < 40) {
+      data.confidence_score = 68;
+    }
+
+    console.log("✅ V7 RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 V5 ULTRA FINAL ERROR:", err);
+    console.error("🔥 V7 ERROR:", err);
     throw err;
   }
 }
