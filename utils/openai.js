@@ -1,56 +1,73 @@
-{/* ⭐ RESULT UI — ACADEMIC MODE */}
-{result && (
-  <div className="space-y-3 mb-6">
+import OpenAI from "openai";
 
-    {/* การประเมินสายพันธุ์ */}
-    <div className="border rounded-xl p-4 bg-indigo-50">
-      🐟 <b>การประเมินสายพันธุ์:</b> {speciesTH} ({speciesEN})
-      <div className="text-xs text-gray-500 mt-1">
-        * ประเมินจากลักษณะภายนอกของปลา (Morphology) ไม่ใช่การยืนยันทางพันธุกรรม
-      </div>
-    </div>
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-    {/* กลุ่มการเลี้ยง */}
-    <div className="border rounded-xl p-4">
-      🧬 <b>กลุ่มการเลี้ยง:</b> {categoryTH} ({categoryEN})
-    </div>
+/**
+ * วิเคราะห์ปลากัด (SAFE MODE)
+ * ⭐ ไม่มี JSX อยู่ใน backend แน่นอน
+ */
+export async function analyzeBettaImage({
+  imageBase64,
+  mimeType = "image/jpeg",
+}) {
+  try {
+    console.log("🔥 BETTA ANALYZE START");
 
-    {/* หาง */}
-    <div className="border rounded-xl p-4">
-      🪶 <b>รูปทรงหาง:</b>{" "}
-      {result?.tail_type_en || "-"}{" "}
-      ({result?.tail_type_th || "-"})
-    </div>
+    const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
-    {/* ลักษณะ */}
-    <div className="border rounded-xl p-4">
-      🎨 <b>ลักษณะทางสัณฐาน:</b> {color}
-    </div>
+    const res = await openai.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        {
+          role: "system",
+          content: [
+            {
+              type: "input_text",
+              text: `
+คุณคือผู้เชี่ยวชาญปลากัด
 
-    {/* เกรด */}
-    <div className="border rounded-xl p-4">
-      ⭐ <b>ระดับคุณภาพ (Grade):</b> {grade}
-      <div className="text-xs text-gray-500 mt-1">
-        High Grade = โครงสร้างสมดุล ครีบสมบูรณ์ สีสม่ำเสมอ
-      </div>
-    </div>
+วิเคราะห์ปลากัดจากภาพ
+และตอบ JSON เท่านั้น
 
-    {/* Confidence */}
-    <div className="border rounded-xl p-4">
-      🔥 <b>ความมั่นใจของโมเดล:</b> {confidence}%
+{
+"main_species_th":"",
+"main_species_en":"",
+"breed_category_th":"",
+"breed_category_en":"",
+"color_traits":"",
+"grade":"",
+"confidence_score":0,
+"analysis":""
+}
+`,
+            },
+          ],
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_image",
+              image_url: imageDataUrl,
+            },
+          ],
+        },
+      ],
+    });
 
-      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-        <div
-          className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
-          style={{ width: `${confidence}%` }}
-        />
-      </div>
-    </div>
+    // ⭐ SAFE PARSE (กัน Railway crash)
+    let text = res.output_text || "";
+    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
 
-    {/* วิเคราะห์ */}
-    <div className="border rounded-xl p-4 text-sm leading-relaxed">
-      {analysis}
-    </div>
+    const data = JSON.parse(text);
 
-  </div>
-)}
+    console.log("✅ ANALYZE RESULT =", data);
+
+    return data;
+  } catch (err) {
+    console.error("🔥 OPENAI ERROR:", err);
+    throw err;
+  }
+}
