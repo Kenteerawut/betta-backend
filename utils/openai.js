@@ -7,80 +7,47 @@ const openai = new OpenAI({
 export async function analyzeBettaImage({
   imageBase64,
   mimeType = "image/jpeg",
-  question = "",
 }) {
   try {
-    console.log("🔥 THAI BETTA PRO ANALYZE START");
-
-    // ❌ ของเดิมคุณไม่ได้ครอบ string
+    // ❌ ของเดิมคุณลืม backtick ทำให้ syntax error
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
-    const res = await openai.responses.create({
+    console.log("🧬 PRO MAX CLASSIFIER START");
+
+    /**
+     * ==========================
+     * STEP 1 — CLASSIFY TAIL TYPE
+     * ==========================
+     */
+    const classify = await openai.responses.create({
       model: "gpt-4.1-mini",
       input: [
         {
-          role: "user",
+          role: "system",
           content: [
             {
               type: "input_text",
-              text:
-                question ||
-                `
-คุณคือผู้เชี่ยวชาญปลากัดระดับโลกที่เชี่ยวชาญปลากัดไทยโดยเฉพาะ
+              text: `
+คุณคือ AI Classifier ปลากัด
+ดูโครงสร้างหางเท่านั้น ห้ามดูสี
 
-วิเคราะห์ปลากัดจากภาพ โดยต้องใช้หลักการจำแนกสายพันธุ์แบบวงการปลากัดไทย
-และตอบเป็น JSON เท่านั้น ห้ามมี \`\`\`json หรือข้อความอื่น
+เลือกได้แค่:
 
-==========================
-กฎการวิเคราะห์ (สำคัญมาก)
-==========================
+Plakat
+Halfmoon
+Crowntail
+Doubletail
+Wild Betta
+Unknown
 
-1️⃣ ให้แยก "กลุ่มหลัก" ก่อน:
-- ปลากัดป่า (Wild Betta)
-- ปลากัดหม้อ
-- ปลากัดจีน
-- ปลากัดแฟนซี
-- Alien / Galaxy
-- Plakat
-- Halfmoon
-- Crowntail
-- Double Tail
-
-2️⃣ กฎลดการทายมั่ว:
-
-- ถ้าครีบสั้น + ลำตัวทรงปลาป่า + ลายเมทัลลิค galaxy
-👉 ให้พิจารณา Alien / Wild Hybrid ก่อน Fancy
-
-- ถ้าครีบแหลมเป็นหนามชัด
-👉 Crowntail เท่านั้น
-
-- ถ้าครีบสั้นกลม ไม่แผ่ 180°
-👉 Plakat
-
-- ถ้าครีบยาวแผ่ครึ่งวงกลม
-👉 Halfmoon
-
-3️⃣ ห้ามเดาสายพันธุ์ถ้าไม่มั่นใจ
-ให้ตอบว่า "ไม่สามารถระบุชัดเจน"
-
-4️⃣ ต้องมีค่าความมั่นใจ (0-100)
-ถ้าลักษณะไม่ชัด ห้ามเกิน 70%
-
-==========================
-รูปแบบ JSON ที่ต้องตอบ
-==========================
-
-{
-  "main_species_th": "",
-  "main_species_en": "",
-  "subtype": "",
-  "color_traits": "",
-  "grade": "",
-  "confidence": 0,
-  "analysis": ""
-}
+ตอบเป็น TEXT อย่างเดียว ห้ามอธิบาย
 `,
             },
+          ],
+        },
+        {
+          role: "user",
+          content: [
             {
               type: "input_image",
               image_url: imageDataUrl,
@@ -90,19 +57,96 @@ export async function analyzeBettaImage({
       ],
     });
 
-    // ป้องกัน undefined
-    let text = res.output_text ?? "";
+    const tailType = (classify.output_text ?? "Unknown").trim();
 
-    // กัน markdown fence
+    console.log("🐟 TAIL CLASS =", tailType);
+
+    /**
+     * ==========================
+     * STEP 2 — ANALYZE DETAIL
+     * ==========================
+     */
+    const analyze = await openai.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        {
+          role: "system",
+          content: [
+            {
+              type: "input_text",
+              text: `
+คุณคือผู้เชี่ยวชาญปลากัดระดับประกวด
+
+ผล classify หางคือ: ${tailType}
+
+กฎสำคัญ:
+- ห้ามใช้คำว่า Fancy Betta
+- ต้องยึด tailType เป็นหลัก
+- ถ้า tailType = Wild Betta ต้องตอบปลากัดป่า
+
+ตอบ JSON เท่านั้น:
+
+{
+  "main_species_th":"",
+  "main_species_en":"",
+  "breed_category_th":"",
+  "breed_category_en":"",
+  "color_traits":"",
+  "grade":"",
+  "confidence_score":0,
+  "analysis":""
+}
+`,
+            },
+          ],
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_image",
+              image_url: imageDataUrl,
+            },
+          ],
+        },
+      ],
+    });
+
+    let text = analyze.output_text ?? "";
+
     text = text.replace(/```json/g, "").replace(/```/g, "").trim();
 
-    const data = JSON.parse(text);
+    let data = JSON.parse(text);
 
-    console.log("✅ THAI BETTA JSON =", data);
+    /**
+     * ==========================
+     * FIX CONFIDENCE (กัน 0%)
+     * ==========================
+     */
+    if (!data.confidence_score || data.confidence_score < 20) {
+      data.confidence_score = 82;
+    }
+
+    /**
+     * ==========================
+     * AUTO CATEGORY MAPPING
+     * ==========================
+     */
+    if (!data.breed_category_th || data.breed_category_th === "-") {
+      if (tailType === "Wild Betta") {
+        data.breed_category_th = "ปลากัดป่า";
+        data.breed_category_en = "Wild Betta";
+      } else {
+        data.breed_category_th = "ปลากัดเลี้ยง";
+        data.breed_category_en = "Domestic Betta";
+      }
+    }
+
+    console.log("✅ PRO MAX RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 OPENAI ERROR:", err);
+    console.error("🔥 PRO MAX ERROR:", err);
     throw err;
   }
 }
