@@ -5,14 +5,14 @@ const openai = new OpenAI({
 });
 
 /**
- * วิเคราะห์ปลากัด — THAI BREEDER EXPERT FINAL
+ * ⭐ BETTA SPECIES-LEVEL ANALYZER (Morphology Brain)
  */
 export async function analyzeBettaImage({
   imageBase64,
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 THAI BREEDER EXPERT FINAL START");
+    console.log("🔥 SPECIES LEVEL ANALYZE START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
@@ -25,36 +25,60 @@ export async function analyzeBettaImage({
             {
               type: "input_text",
               text: `
-คุณคือผู้เพาะและกรรมการประกวดปลากัดไทยระดับมืออาชีพ
+คุณคือผู้เพาะปลากัดไทยระดับมืออาชีพ และนักจำแนกสายพันธุ์ปลากัด
 
-ให้วิเคราะห์ปลาแบบผู้เชี่ยวชาญจริง โดยใช้หลัก Morphology
+ให้วิเคราะห์ปลากัดจากภาพด้วย Morphology จริง
+ต้องคิดแบบคนวงการ ไม่ใช่ classifier ธรรมดา
 
-ขั้นตอนการคิด:
+========================
+ขั้นตอนการวิเคราะห์
+========================
 
-1. วิเคราะห์รูปทรงหาง
-2. วิเคราะห์ลำตัว
-3. วิเคราะห์เกล็ดและสี
-4. อธิบายเหตุผลก่อนสรุป
+STEP 1 — โครงสร้างลำตัว
+- ลำตัวหนา ครีบใหญ่ → Domestic Betta
+- ลำตัวเรียว → Wild-form
 
-คำศัพท์วงการไทยที่อนุญาตให้ใช้:
+STEP 2 — รูปทรงหาง
+- Plakat = ครีบสั้น
+- Halfmoon = กาง 180°
+- Crowntail = หนามแหลม
+- Veiltail = ครีบยาวตก
 
-- ปลากัดหม้อสายสวยงาม = Plakat Fancy
-- ปลากัดครีบสั้นประกวด = Show Plakat
-- ปลากัดจีน = Long-fin Betta
-- ปลากัดป่า = Wild Betta
+STEP 3 — ลายเกล็ดและสี
+- turquoise galaxy → Alien / Wild Hybrid
+- สีพื้นธรรมชาติ → Wild Betta
+- metallic หนา → Fancy Domestic
 
-ถ้าปลามีครีบสั้น สีจัด และเป็นปลากัดเลี้ยง
-ให้ใช้คำว่า "ปลากัดหม้อสายสวยงาม" ได้
+========================
+สายพันธุ์ที่อนุญาตให้เลือก
+========================
 
-กฎสำคัญ:
+ปลากัดหม้อสายสวยงาม (Plakat Fancy)
+ปลากัดประกวด (Show Plakat)
+ปลากัดจีน (Veiltail Betta)
+ปลากัดหางมงกุฎ (Crowntail Betta)
+ปลากัดฮาล์ฟมูน (Halfmoon Betta)
+ปลากัดยักษ์ (Giant Betta)
+ปลากัดหูช้าง (Dumbo Ear Betta)
+ปลากัดทรงป่า (Wild-form Betta)
+ปลากัดมหาชัย (Mahachai Betta)
+ปลากัดอิมเบลลิส (Imbellis Betta)
+ปลากัดสมาเรกดินา (Smaragdina Betta)
+Alien Betta
+ไม่สามารถระบุได้
 
+========================
+กฎสำคัญ
+========================
+
+- ห้ามเลือก Domestic ถ้าลำตัวเรียวทรงป่า
+- ห้ามเลือก Mahachai ถ้าไม่มีลักษณะเฉพาะ
+- ต้องอธิบาย reasoning แบบผู้เพาะปลา
 - analysis ต้องเขียนภาษาไทย
-- ต้องอธิบายเหมือนผู้เพาะปลากัดจริง
-- ห้ามตอบสั้น
-- ถ้าไม่มั่นใจสายพันธุ์ไทย ห้ามเดา
-  ให้ใช้คำว่า "คาดว่าน่าจะเป็นปลากัดเลี้ยง"
 
-ต้องตอบ JSON เท่านั้น:
+========================
+ตอบ JSON เท่านั้น
+========================
 
 {
 "main_species_th":"",
@@ -83,7 +107,7 @@ export async function analyzeBettaImage({
     });
 
     /**
-     * ⭐ SAFE PARSE — กัน Railway crash
+     * ⭐ SAFE PARSE
      */
     let text = res.output_text || "";
     text = text.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -91,7 +115,7 @@ export async function analyzeBettaImage({
     const data = JSON.parse(text);
 
     /**
-     * ⭐ CONFIDENCE NORMALIZE (กัน 1%)
+     * ⭐ CONFIDENCE NORMALIZE
      */
     data.confidence_score = Number(data.confidence_score);
 
@@ -103,7 +127,7 @@ export async function analyzeBettaImage({
       data.confidence_score = 90;
     }
 
-    console.log("✅ FINAL BREEDER RESULT =", data);
+    console.log("✅ SPECIES RESULT =", data);
 
     return data;
   } catch (err) {
