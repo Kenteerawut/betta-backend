@@ -5,14 +5,14 @@ const openai = new OpenAI({
 });
 
 /**
- * วิเคราะห์ปลากัด — BREEDER EXPERT MODE (SAFE)
+ * วิเคราะห์ปลากัด — THAI BREEDER EXPERT FINAL
  */
 export async function analyzeBettaImage({
   imageBase64,
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 BETTA BREEDER EXPERT START");
+    console.log("🔥 THAI BREEDER EXPERT FINAL START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
@@ -35,6 +35,16 @@ export async function analyzeBettaImage({
 2. วิเคราะห์ลำตัว
 3. วิเคราะห์เกล็ดและสี
 4. อธิบายเหตุผลก่อนสรุป
+
+คำศัพท์วงการไทยที่อนุญาตให้ใช้:
+
+- ปลากัดหม้อสายสวยงาม = Plakat Fancy
+- ปลากัดครีบสั้นประกวด = Show Plakat
+- ปลากัดจีน = Long-fin Betta
+- ปลากัดป่า = Wild Betta
+
+ถ้าปลามีครีบสั้น สีจัด และเป็นปลากัดเลี้ยง
+ให้ใช้คำว่า "ปลากัดหม้อสายสวยงาม" ได้
 
 กฎสำคัญ:
 
@@ -72,7 +82,9 @@ export async function analyzeBettaImage({
       ],
     });
 
-    // ⭐ SAFE PARSE — กัน Railway crash
+    /**
+     * ⭐ SAFE PARSE — กัน Railway crash
+     */
     let text = res.output_text || "";
     text = text.replace(/```json/g, "").replace(/```/g, "").trim();
 
@@ -91,7 +103,7 @@ export async function analyzeBettaImage({
       data.confidence_score = 90;
     }
 
-    console.log("✅ BREEDER RESULT =", data);
+    console.log("✅ FINAL BREEDER RESULT =", data);
 
     return data;
   } catch (err) {
