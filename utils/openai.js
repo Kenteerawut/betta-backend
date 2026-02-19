@@ -5,15 +5,14 @@ const openai = new OpenAI({
 });
 
 /**
- * วิเคราะห์ปลากัด (SAFE MODE)
- * ⭐ ไม่มี JSX อยู่ใน backend แน่นอน
+ * วิเคราะห์ปลากัด — BREEDER EXPERT MODE (SAFE)
  */
 export async function analyzeBettaImage({
   imageBase64,
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 BETTA ANALYZE START");
+    console.log("🔥 BETTA BREEDER EXPERT START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
@@ -26,10 +25,26 @@ export async function analyzeBettaImage({
             {
               type: "input_text",
               text: `
-คุณคือผู้เชี่ยวชาญปลากัด
+คุณคือผู้เพาะและกรรมการประกวดปลากัดไทยระดับมืออาชีพ
 
-วิเคราะห์ปลากัดจากภาพ
-และตอบ JSON เท่านั้น
+ให้วิเคราะห์ปลาแบบผู้เชี่ยวชาญจริง โดยใช้หลัก Morphology
+
+ขั้นตอนการคิด:
+
+1. วิเคราะห์รูปทรงหาง
+2. วิเคราะห์ลำตัว
+3. วิเคราะห์เกล็ดและสี
+4. อธิบายเหตุผลก่อนสรุป
+
+กฎสำคัญ:
+
+- analysis ต้องเขียนภาษาไทย
+- ต้องอธิบายเหมือนผู้เพาะปลากัดจริง
+- ห้ามตอบสั้น
+- ถ้าไม่มั่นใจสายพันธุ์ไทย ห้ามเดา
+  ให้ใช้คำว่า "คาดว่าน่าจะเป็นปลากัดเลี้ยง"
+
+ต้องตอบ JSON เท่านั้น:
 
 {
 "main_species_th":"",
@@ -57,13 +72,26 @@ export async function analyzeBettaImage({
       ],
     });
 
-    // ⭐ SAFE PARSE (กัน Railway crash)
+    // ⭐ SAFE PARSE — กัน Railway crash
     let text = res.output_text || "";
     text = text.replace(/```json/g, "").replace(/```/g, "").trim();
 
     const data = JSON.parse(text);
 
-    console.log("✅ ANALYZE RESULT =", data);
+    /**
+     * ⭐ CONFIDENCE NORMALIZE (กัน 1%)
+     */
+    data.confidence_score = Number(data.confidence_score);
+
+    if (!data.confidence_score || data.confidence_score < 40) {
+      data.confidence_score = 65;
+    }
+
+    if (data.confidence_score > 95) {
+      data.confidence_score = 90;
+    }
+
+    console.log("✅ BREEDER RESULT =", data);
 
     return data;
   } catch (err) {
