@@ -4,9 +4,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-/**
- * ⭐ MAP ไทย (Educational Mode)
- */
 const tailMapTH = {
   Halfmoon: "หางครึ่งวงกลม",
   Crowntail: "หางมงกุฎ",
@@ -27,14 +24,12 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 THAI BETTA PRO MAX V6 START");
+    console.log("🔥 THAI BETTA PRO MAX V6 HOTFIX START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
-     * ==========================
-     * STEP 1 — MORPHOLOGY CLASSIFIER
-     * ==========================
+     * STEP 1 — CLASSIFY TAIL
      */
     const classify = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -77,44 +72,11 @@ Unknown
     console.log("🐟 tail_type =", tailTypeEN);
 
     /**
-     * ==========================
-     * STEP 2 — TAXONOMY ANALYZER
-     * ==========================
+     * STEP 2 — ANALYZE (SAFE MODE)
+     * 🔥 ตัด json_schema ออก เพราะ Railway ยัง parse ไม่ได้
      */
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "thai_betta_v6",
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              main_species_th: { type: "string" },
-              main_species_en: { type: "string" },
-              breed_category_th: { type: "string" },
-              breed_category_en: { type: "string" },
-              special_trait_en: { type: "string" },
-              color_traits: { type: "string" },
-              grade: { type: "string" },
-              confidence_score: { type: "number" },
-              analysis: { type: "string" },
-            },
-            required: [
-              "main_species_th",
-              "main_species_en",
-              "breed_category_th",
-              "breed_category_en",
-              "special_trait_en",
-              "color_traits",
-              "grade",
-              "confidence_score",
-              "analysis",
-            ],
-          },
-        },
-      },
       input: [
         {
           role: "system",
@@ -124,13 +86,21 @@ Unknown
               text: `
 คุณคือ Thai Betta Specialist
 
-tail_type ถูกล็อกแล้วคือ: ${tailTypeEN}
+tail_type คือ: ${tailTypeEN}
 
-ต้องตอบชื่อสายพันธุ์แบบไทย เช่น:
-ปลากัดหม้อ
-ปลากัดจีน
-ปลากัดมหาชัย
-ปลากัดป่า
+ตอบ JSON เท่านั้น:
+
+{
+  "main_species_th":"",
+  "main_species_en":"",
+  "breed_category_th":"",
+  "breed_category_en":"",
+  "special_trait_en":"",
+  "color_traits":"",
+  "grade":"",
+  "confidence_score":0,
+  "analysis":""
+}
 `,
             },
           ],
@@ -148,32 +118,28 @@ tail_type ถูกล็อกแล้วคือ: ${tailTypeEN}
     });
 
     /**
-     * ⭐ FIX รองรับ SDK ทุกเวอร์ชัน (กัน Railway 500)
+     * ⭐ SAFE PARSE (ไม่พัง Railway)
      */
+    let text = res.output_text ?? "";
+    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+
     let data;
 
-    if (res.output?.[0]?.content?.[0]?.json) {
-      data = res.output[0].content[0].json;
-    } else {
-      let text = res.output_text ?? "";
-      text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    try {
       data = JSON.parse(text);
+    } catch (e) {
+      console.error("❌ JSON PARSE FAIL =", text);
+      throw e;
     }
 
     /**
-     * ==========================
-     * EDUCATIONAL MODE — เติมภาษาไทย
-     * ==========================
+     * EDUCATIONAL MODE
      */
     data.tail_type_en = tailTypeEN;
     data.tail_type_th = tailMapTH[tailTypeEN] || "ไม่ทราบ";
-
     data.special_trait_th =
       traitMapTH[data.special_trait_en] || "ไม่ระบุ";
 
-    /**
-     * CONFIDENCE ENGINE
-     */
     if (!data.confidence_score || data.confidence_score < 25) {
       data.confidence_score = 70;
     }
