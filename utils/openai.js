@@ -24,12 +24,14 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 THAI BETTA PRO MAX V6 HOTFIX START");
+    console.log("🔥 THAI BETTA PRO MAX V6 FINAL START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
+     * ==========================
      * STEP 1 — CLASSIFY TAIL
+     * ==========================
      */
     const classify = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -58,10 +60,7 @@ Unknown
         {
           role: "user",
           content: [
-            {
-              type: "input_image",
-              image_url: imageDataUrl,
-            },
+            { type: "input_image", image_url: imageDataUrl },
           ],
         },
       ],
@@ -72,8 +71,9 @@ Unknown
     console.log("🐟 tail_type =", tailTypeEN);
 
     /**
+     * ==========================
      * STEP 2 — ANALYZE (SAFE MODE)
-     * 🔥 ตัด json_schema ออก เพราะ Railway ยัง parse ไม่ได้
+     * ==========================
      */
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -86,20 +86,29 @@ Unknown
               text: `
 คุณคือ Thai Betta Specialist
 
-tail_type คือ: ${tailTypeEN}
+❌ ห้ามใช้คำว่า "Thai Betta" หรือ "ปลากัดไทย"
+
+ต้องเลือกสายพันธุ์จากนี้เท่านั้น:
+
+ปลากัดหม้อ
+ปลากัดจีน
+ปลากัดมหาชัย
+ปลากัดป่า
+ปลากัดประกวด
+ไม่สามารถระบุได้
 
 ตอบ JSON เท่านั้น:
 
 {
-  "main_species_th":"",
-  "main_species_en":"",
-  "breed_category_th":"",
-  "breed_category_en":"",
-  "special_trait_en":"",
-  "color_traits":"",
-  "grade":"",
-  "confidence_score":0,
-  "analysis":""
+"main_species_th":"",
+"main_species_en":"",
+"breed_category_th":"",
+"breed_category_en":"",
+"special_trait_en":"",
+"color_traits":"",
+"grade":"",
+"confidence_score":0,
+"analysis":""
 }
 `,
             },
@@ -108,47 +117,43 @@ tail_type คือ: ${tailTypeEN}
         {
           role: "user",
           content: [
-            {
-              type: "input_image",
-              image_url: imageDataUrl,
-            },
+            { type: "input_image", image_url: imageDataUrl },
           ],
         },
       ],
     });
 
     /**
-     * ⭐ SAFE PARSE (ไม่พัง Railway)
+     * ⭐ SAFE PARSE (กัน Railway พัง)
      */
     let text = res.output_text ?? "";
     text = text.replace(/```json/g, "").replace(/```/g, "").trim();
 
-    let data;
-
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.error("❌ JSON PARSE FAIL =", text);
-      throw e;
-    }
+    let data = JSON.parse(text);
 
     /**
-     * EDUCATIONAL MODE
+     * ==========================
+     * EDUCATIONAL MODE (วงเล็บไทย)
+     * ==========================
      */
     data.tail_type_en = tailTypeEN;
     data.tail_type_th = tailMapTH[tailTypeEN] || "ไม่ทราบ";
+
     data.special_trait_th =
       traitMapTH[data.special_trait_en] || "ไม่ระบุ";
 
+    /**
+     * CONFIDENCE ENGINE
+     */
     if (!data.confidence_score || data.confidence_score < 25) {
       data.confidence_score = 70;
     }
 
-    console.log("✅ PRO MAX V6 RESULT =", data);
+    console.log("✅ V6 FINAL RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 PRO MAX V6 ERROR:", err);
+    console.error("🔥 V6 FINAL ERROR:", err);
     throw err;
   }
 }
