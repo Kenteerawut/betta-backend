@@ -4,6 +4,9 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+/**
+ * MAP ภาษาไทย (Educational Mode)
+ */
 const tailMapTH = {
   Halfmoon: "หางครึ่งวงกลม",
   Crowntail: "หางมงกุฎ",
@@ -24,13 +27,13 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 THAI BETTA PRO MAX V6 FINAL START");
+    console.log("🔥 THAI BETTA ACADEMIC MODE START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
      * ==========================
-     * STEP 1 — CLASSIFY TAIL
+     * STEP 1 — MORPHOLOGY CLASSIFIER
      * ==========================
      */
     const classify = await openai.responses.create({
@@ -59,9 +62,7 @@ Unknown
         },
         {
           role: "user",
-          content: [
-            { type: "input_image", image_url: imageDataUrl },
-          ],
+          content: [{ type: "input_image", image_url: imageDataUrl }],
         },
       ],
     });
@@ -72,7 +73,7 @@ Unknown
 
     /**
      * ==========================
-     * STEP 2 — ANALYZE (SAFE MODE)
+     * STEP 2 — TAXONOMY ANALYZER (ACADEMIC LOCK)
      * ==========================
      */
     const res = await openai.responses.create({
@@ -84,18 +85,29 @@ Unknown
             {
               type: "input_text",
               text: `
-คุณคือ Thai Betta Specialist
+คุณคือผู้เชี่ยวชาญปลากัดไทย
 
-❌ ห้ามใช้คำว่า "Thai Betta" หรือ "ปลากัดไทย"
+❌ ห้ามใช้คำว่า Thai Betta
+❌ ห้ามตอบภาษาอังกฤษ
 
-ต้องเลือกสายพันธุ์จากนี้เท่านั้น:
+สายพันธุ์หลักที่อนุญาต:
 
 ปลากัดหม้อ
 ปลากัดจีน
 ปลากัดมหาชัย
 ปลากัดป่า
-ปลากัดประกวด
 ไม่สามารถระบุได้
+
+คำว่า "ปลากัดประกวด" เป็นหมวดการเลี้ยง
+ห้ามใส่ใน main_species_th
+
+tail_type คือ ${tailTypeEN}
+
+การให้เกรด:
+
+High Grade = โครงสร้างสมดุล ครีบสมบูรณ์ สีสม่ำเสมอ
+Medium Grade = รูปทรงดีแต่มีจุดด้อยเล็กน้อย
+Low Grade = โครงสร้างยังไม่สมบูรณ์
 
 ตอบ JSON เท่านั้น:
 
@@ -116,15 +128,13 @@ Unknown
         },
         {
           role: "user",
-          content: [
-            { type: "input_image", image_url: imageDataUrl },
-          ],
+          content: [{ type: "input_image", image_url: imageDataUrl }],
         },
       ],
     });
 
     /**
-     * ⭐ SAFE PARSE (กัน Railway พัง)
+     * SAFE PARSE (กัน Railway 500)
      */
     let text = res.output_text ?? "";
     text = text.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -133,7 +143,7 @@ Unknown
 
     /**
      * ==========================
-     * EDUCATIONAL MODE (วงเล็บไทย)
+     * เติมภาษาไทย (วงเล็บ)
      * ==========================
      */
     data.tail_type_en = tailTypeEN;
@@ -143,17 +153,30 @@ Unknown
       traitMapTH[data.special_trait_en] || "ไม่ระบุ";
 
     /**
-     * CONFIDENCE ENGINE
+     * ==========================
+     * เติมคำอธิบายเกรด
+     * ==========================
      */
+    if (data.grade === "High Grade") {
+      data.grade =
+        "High Grade — โครงสร้างสมดุล ครีบสมบูรณ์ สีสม่ำเสมอ";
+    } else if (data.grade === "Medium Grade") {
+      data.grade =
+        "Medium Grade — รูปทรงดีแต่มีจุดด้อยเล็กน้อย";
+    } else if (data.grade === "Low Grade") {
+      data.grade =
+        "Low Grade — โครงสร้างยังไม่สมบูรณ์";
+    }
+
     if (!data.confidence_score || data.confidence_score < 25) {
       data.confidence_score = 70;
     }
 
-    console.log("✅ V6 FINAL RESULT =", data);
+    console.log("✅ ACADEMIC MODE RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 V6 FINAL ERROR:", err);
+    console.error("🔥 ACADEMIC MODE ERROR:", err);
     throw err;
   }
 }
