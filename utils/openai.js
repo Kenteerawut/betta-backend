@@ -5,8 +5,7 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧠 V7 DEFENSE MODE — NEAR REAL JUDGE
- * เป้าหมาย: ให้ใกล้ reasoning แบบ ChatGPT มากที่สุด
+ * 🧠 GOD JUDGE V7 — STABLE MODE
  */
 
 export async function analyzeBettaImage({
@@ -14,14 +13,14 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 V7 DEFENSE MODE START");
+    console.log("🔥 GOD JUDGE V7 START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
-     * ===============================
+     * ============================
      * STEP 1 — MORPHOLOGY LOCK
-     * ===============================
+     * ============================
      */
     const classify = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -32,24 +31,17 @@ export async function analyzeBettaImage({
             {
               type: "input_text",
               text: `
-คุณคือ Morphology Classifier ปลากัด
+คุณคือ Morphology Classifier
 
-วิเคราะห์เฉพาะโครงสร้าง:
+ดูเฉพาะโครงสร้างปลา:
 
-- Long Fin
-- Short Fin
-- Crowntail Spine
-- Halfmoon Spread
-- Wild Body
-
-ตอบเป็น TEXT:
-
+Wild Body
 Long Fin
 Short Fin
-Crowntail
-Halfmoon
-Wild Form
-Unknown
+Crowntail Spine
+Halfmoon Spread
+
+ตอบ TEXT เท่านั้น
 `,
             },
           ],
@@ -62,12 +54,12 @@ Unknown
     });
 
     const morph = (classify.output_text || "Unknown").trim();
-    console.log("🧬 Morphology =", morph);
+    console.log("🧬 MORPH =", morph);
 
     /**
-     * ===============================
-     * STEP 2 — FINAL JUDGE
-     * ===============================
+     * ============================
+     * STEP 2 — AI ANALYZE
+     * ============================
      */
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -78,25 +70,9 @@ Unknown
             {
               type: "input_text",
               text: `
-คุณคือ Thai Betta Judge (Defense Mode)
+คุณคือ Thai Betta Judge
 
-Morphology ถูกล็อกแล้ว = ${morph}
-
-กฎ:
-
-1) Long Fin → ห้ามตอบปลากัดหม้อ
-2) Wild Form → ห้ามตอบ Fancy
-3) Halfmoon → จัดเป็น Show Betta
-4) Crowntail → ปลากัดประกวด
-
-สายพันธุ์ไทยที่เลือกได้:
-
-ปลากัดหม้อ
-ปลากัดจีน
-ปลากัดมหาชัย
-ปลากัดป่า
-ปลากัดประกวด
-ไม่สามารถระบุได้
+Morphology = ${morph}
 
 ตอบ JSON:
 
@@ -121,11 +97,6 @@ Morphology ถูกล็อกแล้ว = ${morph}
       ],
     });
 
-    /**
-     * ===============================
-     * SAFE PARSE
-     * ===============================
-     */
     let data;
 
     if (res.output?.[0]?.content?.[0]?.json) {
@@ -137,36 +108,51 @@ Morphology ถูกล็อกแล้ว = ${morph}
     }
 
     /**
-     * ===============================
-     * DEFENSE MODE BIO FIX
-     * ===============================
+     * ======================================
+     * 🧬 GOD JUDGE ENGINE (BIO FILTER)
+     * ======================================
      */
 
-    // Inject morphology
     data.morphology = morph;
 
-    // ⭐ Long Fin → กัน Plakat
-    if (morph === "Long Fin" && data.main_species_th === "ปลากัดหม้อ") {
+    const analysis = (data.analysis || "").toLowerCase();
+
+    // ⭐ Rule 1 — Wild lock
+    if (morph.includes("Wild") || analysis.includes("wild")) {
+      data.main_species_th = "ปลากัดป่า";
+      data.main_species_en = "Wild Betta";
+      data.breed_category_th = "ปลากัดป่า";
+      data.breed_category_en = "Wild Betta";
+    }
+
+    // ⭐ Rule 2 — Long Fin ห้ามเป็นหม้อ
+    if (morph.includes("Long") && data.main_species_th === "ปลากัดหม้อ") {
       data.main_species_th = "ปลากัดประกวด";
       data.main_species_en = "Show Betta";
     }
 
-    // ⭐ Wild Lock
-    if (morph === "Wild Form") {
+    // ⭐ Rule 3 — ไม่มีหนาม ห้าม Crowntail
+    if (!analysis.includes("หนาม") && data.breed_category_en?.includes("Crowntail")) {
+      data.breed_category_th = "ปลากัดสวยงาม";
+      data.breed_category_en = "Domestic Betta";
+    }
+
+    // ⭐ Rule 4 — ลำตัวเรียว bias wild
+    if (analysis.includes("ลำตัวเรียว")) {
       data.main_species_th = "ปลากัดป่า";
       data.main_species_en = "Wild Betta";
     }
 
     // ⭐ Confidence normalization
-    if (!data.confidence_score || data.confidence_score < 40) {
+    if (!data.confidence_score || data.confidence_score < 60) {
       data.confidence_score = 68;
     }
 
-    console.log("✅ V7 RESULT =", data);
+    console.log("✅ GOD V7 RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 V7 ERROR:", err);
+    console.error("🔥 GOD V7 ERROR:", err);
     throw err;
   }
 }
