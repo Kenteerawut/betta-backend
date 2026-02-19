@@ -9,14 +9,13 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    // ❌ ของเดิมคุณลืม backtick ทำให้ syntax error
-    const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
+    console.log("🔥 THAI BETTA PRO MAX V5 START");
 
-    console.log("🧬 PRO MAX CLASSIFIER START");
+    const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
      * ==========================
-     * STEP 1 — CLASSIFY TAIL TYPE
+     * STEP 1 — MORPHOLOGY CLASSIFIER
      * ==========================
      */
     const classify = await openai.responses.create({
@@ -28,19 +27,20 @@ export async function analyzeBettaImage({
             {
               type: "input_text",
               text: `
-คุณคือ AI Classifier ปลากัด
-ดูโครงสร้างหางเท่านั้น ห้ามดูสี
+คุณคือ Morphology Classifier ปลากัด
 
-เลือกได้แค่:
+ดูเฉพาะรูปทรงหางเท่านั้น
+
+เลือกได้เท่านั้น:
 
 Plakat
 Halfmoon
 Crowntail
 Doubletail
-Wild Betta
+Wild Form
 Unknown
 
-ตอบเป็น TEXT อย่างเดียว ห้ามอธิบาย
+ตอบ TEXT อย่างเดียว
 `,
             },
           ],
@@ -59,15 +59,49 @@ Unknown
 
     const tailType = (classify.output_text ?? "Unknown").trim();
 
-    console.log("🐟 TAIL CLASS =", tailType);
+    console.log("🐟 LOCKED tail_type =", tailType);
 
     /**
      * ==========================
-     * STEP 2 — ANALYZE DETAIL
+     * STEP 2 — TAXONOMY ANALYZER (SCHEMA LOCK)
      * ==========================
      */
-    const analyze = await openai.responses.create({
+    const res = await openai.responses.create({
       model: "gpt-4.1-mini",
+
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "thai_betta_taxonomy",
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              main_species_th: { type: "string" },
+              main_species_en: { type: "string" },
+              breed_category_th: { type: "string" },
+              breed_category_en: { type: "string" },
+              tail_type: { type: "string" },
+              color_traits: { type: "string" },
+              grade: { type: "string" },
+              confidence_score: { type: "number" },
+              analysis: { type: "string" },
+            },
+            required: [
+              "main_species_th",
+              "main_species_en",
+              "breed_category_th",
+              "breed_category_en",
+              "tail_type",
+              "color_traits",
+              "grade",
+              "confidence_score",
+              "analysis",
+            ],
+          },
+        },
+      },
+
       input: [
         {
           role: "system",
@@ -75,27 +109,22 @@ Unknown
             {
               type: "input_text",
               text: `
-คุณคือผู้เชี่ยวชาญปลากัดระดับประกวด
+คุณคือ Thai Betta Taxonomy Specialist
 
-ผล classify หางคือ: ${tailType}
+tail_type ถูกล็อกแล้วคือ: ${tailType}
 
 กฎสำคัญ:
-- ห้ามใช้คำว่า Fancy Betta
-- ต้องยึด tailType เป็นหลัก
-- ถ้า tailType = Wild Betta ต้องตอบปลากัดป่า
 
-ตอบ JSON เท่านั้น:
+- tail_type ห้ามเปลี่ยน
+- Halfmoon / Crowntail / Plakat = รูปทรงหาง ไม่ใช่สายพันธุ์
+- ต้องเลือกสายพันธุ์หลักแบบไทย เช่น:
+  ปลากัดหม้อ
+  ปลากัดจีน
+  ปลากัดมหาชัย
+  ปลากัดป่า
+  ไม่สามารถระบุได้
 
-{
-  "main_species_th":"",
-  "main_species_en":"",
-  "breed_category_th":"",
-  "breed_category_en":"",
-  "color_traits":"",
-  "grade":"",
-  "confidence_score":0,
-  "analysis":""
-}
+ถ้าไม่มั่นใจ ห้าม confidence เกิน 70
 `,
             },
           ],
@@ -112,41 +141,29 @@ Unknown
       ],
     });
 
-    let text = analyze.output_text ?? "";
-
-    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-
-    let data = JSON.parse(text);
+    const data = res.output[0].content[0].json;
 
     /**
      * ==========================
-     * FIX CONFIDENCE (กัน 0%)
+     * CONFIDENCE ENGINE
      * ==========================
      */
-    if (!data.confidence_score || data.confidence_score < 20) {
-      data.confidence_score = 82;
+    if (!data.confidence_score || data.confidence_score < 25) {
+      data.confidence_score = 65;
     }
 
-    /**
-     * ==========================
-     * AUTO CATEGORY MAPPING
-     * ==========================
-     */
-    if (!data.breed_category_th || data.breed_category_th === "-") {
-      if (tailType === "Wild Betta") {
-        data.breed_category_th = "ปลากัดป่า";
-        data.breed_category_en = "Wild Betta";
-      } else {
-        data.breed_category_th = "ปลากัดเลี้ยง";
-        data.breed_category_en = "Domestic Betta";
-      }
+    if (tailType === "Unknown" && data.confidence_score > 60) {
+      data.confidence_score = 60;
     }
 
-    console.log("✅ PRO MAX RESULT =", data);
+    // ⭐ Inject locked tail_type
+    data.tail_type = tailType;
+
+    console.log("✅ PRO MAX V5 RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 PRO MAX ERROR:", err);
+    console.error("🔥 PRO MAX V5 ERROR:", err);
     throw err;
   }
 }
