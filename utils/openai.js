@@ -4,15 +4,12 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-/**
- * ⭐ BETTA SPECIES-LEVEL ANALYZER (Morphology Brain)
- */
 export async function analyzeBettaImage({
   imageBase64,
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 SPECIES LEVEL ANALYZE START");
+    console.log("🔥 BETTA V4 PRO START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
@@ -25,64 +22,37 @@ export async function analyzeBettaImage({
             {
               type: "input_text",
               text: `
-คุณคือผู้เพาะปลากัดไทยระดับมืออาชีพ และนักจำแนกสายพันธุ์ปลากัด
+คุณคือผู้เชี่ยวชาญปลากัดระดับนักเพาะไทย
 
-ให้วิเคราะห์ปลากัดจากภาพด้วย Morphology จริง
-ต้องคิดแบบคนวงการ ไม่ใช่ classifier ธรรมดา
+กฎสำคัญ:
 
-========================
-ขั้นตอนการวิเคราะห์
-========================
+1. วิเคราะห์จาก Morphology จริง
+2. ต้องแยก tail_type ก่อน
+3. ห้ามมั่วคำว่า Fancy ถ้าไม่ชัด
+4. ต้องพยายามระบุสายพันธุ์ให้ชัดที่สุด
 
-STEP 1 — โครงสร้างลำตัว
-- ลำตัวหนา ครีบใหญ่ → Domestic Betta
-- ลำตัวเรียว → Wild-form
+สายพันธุ์ที่อนุญาต:
 
-STEP 2 — รูปทรงหาง
-- Plakat = ครีบสั้น
-- Halfmoon = กาง 180°
-- Crowntail = หนามแหลม
-- Veiltail = ครีบยาวตก
+ปลากัดหม้อ
+ปลากัดจีน
+ปลากัดป่า
+ปลากัดมหาชัย
+Crowntail Betta
+Halfmoon Betta
+Plakat Betta
+Veiltail Betta
+Dumbo Ear Betta
+Giant Betta
+Double Tail Betta
 
-STEP 3 — ลายเกล็ดและสี
-- turquoise galaxy → Alien / Wild Hybrid
-- สีพื้นธรรมชาติ → Wild Betta
-- metallic หนา → Fancy Domestic
-
-========================
-สายพันธุ์ที่อนุญาตให้เลือก
-========================
-
-ปลากัดหม้อสายสวยงาม (Plakat Fancy)
-ปลากัดประกวด (Show Plakat)
-ปลากัดจีน (Veiltail Betta)
-ปลากัดหางมงกุฎ (Crowntail Betta)
-ปลากัดฮาล์ฟมูน (Halfmoon Betta)
-ปลากัดยักษ์ (Giant Betta)
-ปลากัดหูช้าง (Dumbo Ear Betta)
-ปลากัดทรงป่า (Wild-form Betta)
-ปลากัดมหาชัย (Mahachai Betta)
-ปลากัดอิมเบลลิส (Imbellis Betta)
-ปลากัดสมาเรกดินา (Smaragdina Betta)
-Alien Betta
-ไม่สามารถระบุได้
-
-========================
-กฎสำคัญ
-========================
-
-- ห้ามเลือก Domestic ถ้าลำตัวเรียวทรงป่า
-- ห้ามเลือก Mahachai ถ้าไม่มีลักษณะเฉพาะ
-- ต้องอธิบาย reasoning แบบผู้เพาะปลา
-- analysis ต้องเขียนภาษาไทย
-
-========================
-ตอบ JSON เท่านั้น
-========================
+ตอบ JSON เท่านั้น:
 
 {
 "main_species_th":"",
 "main_species_en":"",
+"tail_type_en":"",
+"tail_type_th":"",
+"special_trait":"",
 "breed_category_th":"",
 "breed_category_en":"",
 "color_traits":"",
@@ -106,32 +76,21 @@ Alien Betta
       ],
     });
 
-    /**
-     * ⭐ SAFE PARSE
-     */
     let text = res.output_text || "";
     text = text.replace(/```json/g, "").replace(/```/g, "").trim();
 
     const data = JSON.parse(text);
 
-    /**
-     * ⭐ CONFIDENCE NORMALIZE
-     */
-    data.confidence_score = Number(data.confidence_score);
-
+    // ⭐ FIX CONFIDENCE
     if (!data.confidence_score || data.confidence_score < 40) {
       data.confidence_score = 65;
     }
 
-    if (data.confidence_score > 95) {
-      data.confidence_score = 90;
-    }
-
-    console.log("✅ SPECIES RESULT =", data);
+    console.log("✅ BETTA V4 RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 OPENAI ERROR:", err);
+    console.error("🔥 BETTA V4 ERROR:", err);
     throw err;
   }
 }
