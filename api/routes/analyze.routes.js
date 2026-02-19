@@ -1,57 +1,63 @@
-{/* ⭐ RESULT UI — V4 PRO */}
-{result && (
-  <div className="space-y-3 mb-6">
+import express from "express";
+import multer from "multer";
+import { authRequired } from "../../middleware/auth.middleware.js";
+import { analyzeBettaImage } from "../../utils/openai.js";
+import FishRecord from "../../models/FishRecord.js";
 
-    {/* สายพันธุ์ */}
-    <div className="border rounded-xl p-4 bg-indigo-50">
-      🐟 <b>สายพันธุ์:</b> {speciesTH} ({speciesEN})
-    </div>
+const router = express.Router();
 
-    {/* กลุ่มการเลี้ยง (เปลี่ยนชื่อแล้ว) */}
-    <div className="border rounded-xl p-4">
-      🧬 <b>คาดว่าน่าจะเป็นสายพันธุ์:</b>{" "}
-      {categoryTH} ({categoryEN})
-    </div>
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
 
-    {/* หาง */}
-    <div className="border rounded-xl p-4">
-      🪶 <b>รูปทรงหาง:</b>{" "}
-      {result?.tail_type_en || "-"} ({result?.tail_type_th || "-"})
-    </div>
+router.post("/", authRequired, upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "no_file" });
+    }
 
-    {/* Trait */}
-    <div className="border rounded-xl p-4">
-      🧠 <b>ลักษณะพิเศษ:</b> {result?.special_trait || "-"}
-    </div>
+    const base64Image = req.file.buffer.toString("base64");
 
-    {/* สี */}
-    <div className="border rounded-xl p-4">
-      🎨 <b>ลักษณะทางสัณฐาน:</b> {color}
-    </div>
+    console.log("🔥 analyze start");
 
-    {/* เกรด */}
-    <div className="border rounded-xl p-4">
-      ⭐ <b>ระดับคุณภาพ (Grade):</b> {grade}
-      <div className="text-xs text-gray-500 mt-1">
-        A = โครงสร้างดีมาก | B = ดี | C = ทั่วไป
-      </div>
-    </div>
+    const result = await analyzeBettaImage({
+      imageBase64: base64Image,
+      question: req.body.question || "",
+    });
 
-    {/* Confidence */}
-    <div className="border rounded-xl p-4">
-      🔥 <b>ความมั่นใจของโมเดล:</b> {confidence}%
-      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-        <div
-          className="bg-indigo-600 h-2 rounded-full"
-          style={{ width: `${confidence}%` }}
-        />
-      </div>
-    </div>
+    console.log("🔥 AI RESULT:", result);
 
-    {/* วิเคราะห์ */}
-    <div className="border rounded-xl p-4 text-sm leading-relaxed">
-      {analysis}
-    </div>
+    if (!result) {
+      return res.status(500).json({
+        error: "ai_no_result",
+      });
+    }
 
-  </div>
-)}
+    const doc = await FishRecord.create({
+      userId: req.user.userId,
+      fishName: result.fishName || "",
+      type: result.type || "",
+      color: result.color || "",
+      note: result.answer || "",
+      imageName: req.file.originalname,
+      imageUrl: "",
+    });
+
+    res.json({
+  ok: true,
+  result,
+  recordId: doc._id,
+});
+
+  } catch (err) {
+    console.error("🔥 ANALYZE ERROR:", err);
+
+    res.status(500).json({
+      error: "analyze_failed",
+      message: String(err),
+    });
+  }
+});
+
+export default router;
