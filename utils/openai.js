@@ -5,7 +5,11 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧬 BETTA GOD ENGINE — MASTER PROMPT FINAL
+ * 🧬 BETTA GOD ENGINE V12 — FINAL DEFENSE VERSION
+ * ✔ Wild priority
+ * ✔ Dumbo detection
+ * ✔ Crowntail not override Wild
+ * ✔ Breeder Logic จริง
  */
 
 export async function analyzeBettaImage({
@@ -13,13 +17,13 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 GOD ENGINE MASTER START");
+    console.log("🔥 GOD ENGINE V12 START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
      * =====================================================
-     * PASS 1 — MORPHOLOGY DETECTOR
+     * PASS 1 — STRUCTURE DETECTOR (MULTI LABEL)
      * =====================================================
      */
     const classify = await openai.responses.create({
@@ -31,17 +35,17 @@ export async function analyzeBettaImage({
             {
               type: "input_text",
               text: `
-คุณคือ Morphology Detector ปลากัด
+คุณคือ Morphology Detector ปลากัด (Breeder Standard)
 
-ตรวจหา:
-Wild Body
-Long Fin
-Short Fin Plakat
-Halfmoon Spread
-Crowntail Spine
-Elephant Ear Dumbo
-Double Tail
-Rosetail Feather
+ตรวจหาโครงสร้าง:
+- Wild Body
+- Long Fin
+- Short Fin Plakat
+- Halfmoon Spread 180 Degree
+- Crowntail Spine (web reduction เท่านั้น)
+- Elephant Ear Dumbo (pectoral ใหญ่)
+- Double Tail
+- Rosetail Feather
 
 ตอบ TEXT ONLY
 `,
@@ -64,7 +68,7 @@ Rosetail Feather
 
     /**
      * =====================================================
-     * PASS 2 — MASTER PROMPT FINAL
+     * PASS 2 — EXPERT JUDGE MASTER
      * =====================================================
      */
     const res = await openai.responses.create({
@@ -77,81 +81,25 @@ Rosetail Feather
               type: "input_text",
               text: `
 SYSTEM ROLE:
-คุณคือ "ผู้ตัดสินปลากัดระดับประกวด (Professional Betta Judge)"
+คุณคือกรรมการปลากัดระดับประกวด
+
+วิเคราะห์แบบ breeder:
+- อย่า lock Fancy/Wild ถ้าไม่ชัด
+- Halfmoon ต้องกล่าวถึง 180 องศา
+- Dumbo = ครีบอกใหญ่ (หูช้าง)
+- Crowntail ต้องมี web reduction
+- Wild ต้องดู body shape ก่อน
 
 Morphology = ${morph}
 
-================================================
-📊 วิเคราะห์ตาม Layer ต่อไปนี้
-================================================
-
-1️⃣ Origin Group
-- Wild Betta
-- Fancy Betta
-- Hybrid Fancy
-
-กฎ:
-- ถ้ามี Wild Body → ต้องเป็น Wild Betta
-- Wild ห้าม override เป็น Halfmoon
-
-------------------------------------------------
-
-2️⃣ Structure Type
-Halfmoon
-Crowntail
-Plakat
-Double Tail
-Veiltail
-Rosetail
-Dumbo Ear / Elephant Ear
-
-กฎ:
-- Crowntail Spine → Crowntail
-- Halfmoon Spread → ต้องพูดถึง 180°
-- Long Fin → ห้าม Plakat
-- Elephant Ear = ครีบอกใหญ่ ต้องมีคำว่า หูช้าง
-
-------------------------------------------------
-
-3️⃣ Pattern Type
-Marble
-Koi
-Fancy
-Galaxy
-Dragon Scale
-Patriotic
-
-Pattern ห้าม override Structure
-
-------------------------------------------------
-
-4️⃣ Color Group
-Red
-Blue
-Black
-Yellow
-Metallic
-White
-Multicolor
-
-================================================
-🧠 LOCKED RULES
-================================================
-Morphology Priority > Structure > Pattern > Color
-
-================================================
 ตอบ JSON ONLY:
 
 {
  "status":"success",
- "origin_group":"",
- "origin_group_th":"",
- "structure_type":"",
- "structure_type_th":"",
- "pattern_type":"",
- "pattern_type_th":"",
  "breed_estimate":"",
  "breed_estimate_th":"",
+ "betta_group":"",
+ "betta_group_th":"",
  "short_reason":"",
  "confidence":0
 }
@@ -171,7 +119,7 @@ Morphology Priority > Structure > Pattern > Color
      * SAFE JSON PARSER
      * =====================================================
      */
-    let data = {};
+    let data: any = {};
 
     try {
       let text =
@@ -180,7 +128,6 @@ Morphology Priority > Structure > Pattern > Color
         "{}";
 
       text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
-
       data = JSON.parse(text);
     } catch (e) {
       console.log("⚠️ JSON FALLBACK", e);
@@ -189,43 +136,72 @@ Morphology Priority > Structure > Pattern > Color
 
     /**
      * =====================================================
-     * 🧠 MASTER JUDGE LOGIC (FINAL)
+     * 🧠 GOD JUDGE FINAL PRIORITY SYSTEM
      * =====================================================
      */
 
     data.morphology = morph;
 
-    const reason = (data.short_reason || "").toLowerCase();
+    const m = (morph || "").toLowerCase();
+    const r = (data.short_reason || "").toLowerCase();
 
-    // ⭐ Wild Lock
-    if (morph.includes("Wild")) {
-      data.origin_group = "Wild Betta";
-      data.origin_group_th = "ปลากัดป่า";
+    let groupEN = "";
+    let groupTH = "";
+
+    /**
+     * PRIORITY ORDER (สำคัญมาก)
+     * Wild > Dumbo > Crowntail > Halfmoon > Plakat
+     */
+
+    // ⭐ 1. WILD FIRST
+    if (m.includes("wild")) {
+      groupEN = "Wild Betta";
+      groupTH = "ปลากัดป่า";
     }
 
-    // ⭐ Elephant Ear
-    if (morph.includes("Elephant") || reason.includes("หูช้าง")) {
+    // ⭐ 2. DUMBO (Elephant Ear)
+    else if (m.includes("elephant") || r.includes("หูช้าง")) {
+      groupEN = "Dumbo Elephant Ear";
+      groupTH = "หูช้าง";
+    }
+
+    // ⭐ 3. CROWNTAIL (ต้องไม่ใช่ wild)
+    else if (m.includes("crowntail") && !m.includes("wild")) {
+      groupEN = "Crowntail";
+      groupTH = "คราวน์เทล";
+    }
+
+    // ⭐ 4. HALFMOON
+    else if (m.includes("halfmoon")) {
+      groupEN = "Halfmoon";
+      groupTH = "ฮาฟมูน";
+    }
+
+    // ⭐ 5. PLAKAT
+    else if (m.includes("short")) {
+      groupEN = "Plakat";
+      groupTH = "ปลากัดครีบสั้น";
+    }
+
+    if (groupEN) {
+      data.betta_group = `${groupEN} (${groupTH})`;
+    }
+
+    /**
+     * =====================================================
+     * ⭐ MORPHOLOGY ENHANCEMENT (DUMBO FIX)
+     * =====================================================
+     */
+    if (m.includes("elephant") || r.includes("หูช้าง")) {
       data.morphology =
         (data.morphology || "") + " Elephant Ear Dumbo";
     }
 
-    // ⭐ Structure Mapping
-    if (morph.includes("Halfmoon")) {
-      data.structure_type = "Halfmoon";
-      data.structure_type_th = "ฮาฟมูน";
-    }
-
-    if (morph.includes("Crowntail")) {
-      data.structure_type = "Crowntail";
-      data.structure_type_th = "คราวน์เทล";
-    }
-
-    if (morph.includes("Short")) {
-      data.structure_type = "Plakat";
-      data.structure_type_th = "ปลากัดครีบสั้น";
-    }
-
-    // ⭐ Confidence Normalize
+    /**
+     * =====================================================
+     * ⭐ CONFIDENCE NORMALIZE
+     * =====================================================
+     */
     let conf = data.confidence ?? 0;
 
     if (typeof conf === "number") {
@@ -240,20 +216,19 @@ Morphology Priority > Structure > Pattern > Color
 
     /**
      * =====================================================
-     * COMBINE TH + EN
+     * ⭐ COMBINE TH + EN DISPLAY
      * =====================================================
      */
-
     if (data.breed_estimate && data.breed_estimate_th) {
       data.breed_estimate =
         `${data.breed_estimate} (${data.breed_estimate_th})`;
     }
 
-    console.log("✅ MASTER RESULT =", data);
+    console.log("✅ GOD ENGINE V12 RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 GOD ENGINE ERROR:", err);
+    console.error("🔥 GOD ENGINE V12 ERROR:", err);
     throw err;
   }
 }
