@@ -1,3 +1,16 @@
+import express from "express";
+import multer from "multer";
+import { authRequired } from "../../middleware/auth.middleware.js";
+import { analyzeBettaImage } from "../../utils/openai.js";
+import FishRecord from "../../models/FishRecord.js";
+
+const router = express.Router();
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
 router.post("/", authRequired, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
@@ -8,43 +21,25 @@ router.post("/", authRequired, upload.single("image"), async (req, res) => {
 
     console.log("🔥 analyze start");
 
-    const ai = await analyzeBettaImage({
+    const result = await analyzeBettaImage({
       imageBase64: base64Image,
       question: req.body.question || "",
     });
 
-    console.log("🔥 AI RESULT:", ai);
+    console.log("🔥 AI RESULT:", result);
 
-    if (!ai || ai.status !== "success") {
-      return res.status(200).json({
-        ok: true,
-        result: {
-          fishName: ai?.breed_estimate || "-",
-          type: ai?.betta_group || "-",
-          color: ai?.morphology || "-",
-          answer: ai?.short_reason || "ไม่สามารถวิเคราะห์ได้",
-          confidence: ai?.confidence || 0,
-        },
+    if (!result) {
+      return res.status(500).json({
+        error: "ai_no_result",
       });
     }
 
-    /**
-     * 🔥 MAP ใหม่ให้ตรง FRONTEND
-     */
-    const result = {
-      fishName: ai.breed_estimate || "-",
-      type: ai.betta_group || "-",
-      color: ai.morphology || "-",
-      answer: ai.short_reason || "-",
-      confidence: ai.confidence || 0,
-    };
-
     const doc = await FishRecord.create({
       userId: req.user.userId,
-      fishName: result.fishName,
-      type: result.type,
-      color: result.color,
-      note: result.answer,
+      fishName: result.breed_estimate || "",
+      type: result.betta_group || "",
+      color: "",
+      note: result.short_reason || "",
       imageName: req.file.originalname,
       imageUrl: "",
     });
@@ -54,7 +49,6 @@ router.post("/", authRequired, upload.single("image"), async (req, res) => {
       result,
       recordId: doc._id,
     });
-
   } catch (err) {
     console.error("🔥 ANALYZE ERROR:", err);
 
@@ -64,3 +58,5 @@ router.post("/", authRequired, upload.single("image"), async (req, res) => {
     });
   }
 });
+
+export default router;
