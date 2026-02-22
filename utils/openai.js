@@ -4,19 +4,24 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+/**
+ * 🧬 BETTA GOD ENGINE V10 — THAI PRO+
+ * Expert Judge Mode
+ */
+
 export async function analyzeBettaImage({
   imageBase64,
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 GOD JUDGE THAI PRO+ START");
+    console.log("🔥 BETTA GOD V10 START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
-     * =========================
-     * PASS 1 — MORPHOLOGY
-     * =========================
+     * ==========================================
+     * PASS 1 — MORPHOLOGY CLASSIFIER
+     * ==========================================
      */
     const classify = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -52,10 +57,12 @@ Halfmoon Spread
       classify.output_text ||
       "Unknown";
 
+    console.log("🧬 MORPH =", morph);
+
     /**
-     * =========================
-     * PASS 2 — GOD JUDGE THAI PRO+
-     * =========================
+     * ==========================================
+     * PASS 2 — EXPERT JUDGE ANALYSIS (THAI PRO+)
+     * ==========================================
      */
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -66,27 +73,32 @@ Halfmoon Spread
             {
               type: "input_text",
               text: `
-คุณคือ AI กรรมการวิเคราะห์ปลากัดมืออาชีพ
+SYSTEM ROLE:
+คุณคือ "ผู้เชี่ยวชาญปลากัดระดับประกวด"
+
+วิเคราะห์เหมือน breeder มืออาชีพ:
+- ใช้ภาษาไทย + อังกฤษ
+- ตั้งชื่อสายพันธุ์แบบคนเลี้ยงใช้จริง
+- วิเคราะห์จากโครงสร้าง หาง สี pattern
 
 Morphology = ${morph}
 
-กฎ:
-- ตอบภาษาไทยเป็นหลัก
-- สายพันธุ์ต้องมี อังกฤษ + ไทย ในวงเล็บ
-- กลุ่มต้องมี อังกฤษ + ไทย ในวงเล็บ
-- confidence ต้องอยู่ระหว่าง 0.0 ถึง 1.0 เท่านั้น
-- ห้ามใส่ %
+กฎการวิเคราะห์:
+- Halfmoon ต้องพูดถึง 180 องศา
+- ถ้ามีลายแดง ขาว น้ำเงิน ให้เรียกลายธงชาติ
+- Fancy/Marble ต้องระบุ pattern
+- ห้ามใช้คำ generic ถ้าระบุได้
 
 ตอบ JSON ONLY:
 
 {
-  "status":"success",
-  "betta_group":"",
-  "betta_group_th":"",
-  "breed_estimate":"",
-  "breed_estimate_th":"",
-  "short_reason":"",
-  "confidence":0.0
+ "status":"success",
+ "breed_estimate":"",
+ "breed_estimate_th":"",
+ "betta_group":"",
+ "betta_group_th":"",
+ "short_reason":"",
+ "confidence":0
 }
 `,
             },
@@ -100,9 +112,9 @@ Morphology = ${morph}
     });
 
     /**
-     * =========================
-     * SAFE JSON PARSER
-     * =========================
+     * ==========================================
+     * ⭐ SAFE JSON PARSER
+     * ==========================================
      */
     let data = {};
 
@@ -124,21 +136,61 @@ Morphology = ${morph}
     }
 
     /**
-     * =========================
-     * 🧠 GOD JUDGE ENGINE
-     * =========================
+     * ==========================================
+     * 🧠 GOD JUDGE LOGIC
+     * ==========================================
      */
 
     data.morphology = morph;
 
+    const reason = (data.short_reason || "").toLowerCase();
+
+    // ⭐ Wild lock
     if (morph.includes("Wild")) {
       data.betta_group = "WILD";
       data.betta_group_th = "สายป่า";
     }
 
+    // ⭐ Halfmoon rule
+    if (morph.includes("Halfmoon")) {
+      data.betta_group = "Halfmoon";
+      data.betta_group_th = "ฮาฟมูน";
+    }
+
+    // ⭐ Long fin ห้าม Plakat
+    if (morph.includes("Long") && data.tail_type === "Plakat") {
+      data.tail_type = "Halfmoon";
+    }
+
+    // ⭐ ไม่มีหนาม ห้าม Crowntail
+    if (!reason.includes("หนาม") && data.tail_type === "Crowntail") {
+      data.tail_type = "Domestic";
+    }
+
     /**
-     * ⭐ รวมไทย+อังกฤษ
+     * ==========================================
+     * ⭐ CONFIDENCE NORMALIZE (กัน 9500%)
+     * ==========================================
      */
+
+    let conf = data.confidence ?? 0;
+
+    if (typeof conf === "number") {
+      if (conf <= 1) conf = Math.round(conf * 100);
+      else if (conf <= 100) conf = Math.round(conf);
+      else conf = 95;
+    } else {
+      conf = 68;
+    }
+
+    data.confidence = conf;
+
+    /**
+     * ==========================================
+     * ⭐ COMBINE TH + EN DISPLAY
+     * ==========================================
+     */
+
     if (data.breed_estimate && data.breed_estimate_th) {
       data.breed_estimate =
         `${data.breed_estimate} (${data.breed_estimate_th})`;
@@ -149,24 +201,11 @@ Morphology = ${morph}
         `${data.betta_group} (${data.betta_group_th})`;
     }
 
-    /**
-     * ⭐ Normalize Confidence (กัน 9500%)
-     */
-    if (typeof data.confidence === "number") {
-      if (data.confidence <= 1) {
-        data.confidence = Number(data.confidence.toFixed(2));
-      } else {
-        data.confidence = 0.68;
-      }
-    } else {
-      data.confidence = 0.68;
-    }
-
-    console.log("✅ GOD JUDGE THAI PRO+ RESULT =", data);
+    console.log("✅ BETTA GOD RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 GOD JUDGE ERROR:", err);
+    console.error("🔥 BETTA GOD ERROR:", err);
     throw err;
   }
 }
