@@ -5,7 +5,7 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧬 BETTA AI — GOD ENGINE PRO (RAILWAY SAFE)
+ * 🧬 BETTA AI — GOD ENGINE (RAILWAY SAFE)
  */
 
 export async function analyzeBettaImage({
@@ -53,7 +53,7 @@ Halfmoon Spread
       ],
     });
 
-    // ✅ SAFE READ OUTPUT
+    // ✅ SAFE OUTPUT READ (Railway Safe)
     const morph =
       classify.output?.[0]?.content?.[0]?.text ||
       classify.output_text ||
@@ -63,12 +63,11 @@ Halfmoon Spread
 
     /**
      * =====================================
-     * PASS 2 — FINAL ANALYSIS (JSON LOCK)
+     * PASS 2 — FINAL ANALYSIS
      * =====================================
      */
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
-      response_format: { type: "json_object" }, // ⭐ สำคัญมาก กัน parse พัง
       input: [
         {
           role: "system",
@@ -133,10 +132,10 @@ PASS 3 — CONFIDENCE
 
     /**
      * =====================================
-     * SAFE JSON READ (NO CRASH)
+     * SAFE JSON PARSER (ZERO CRASH)
      * =====================================
      */
-    let data;
+    let data = {};
 
     try {
       data =
