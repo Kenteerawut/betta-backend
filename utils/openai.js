@@ -5,8 +5,7 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧬 BETTA GOD ENGINE V11 — FINAL MASTER
- * วิเคราะห์ได้ทุกสาย ไม่ bias
+ * 🧬 BETTA GOD ENGINE — MASTER PROMPT FINAL
  */
 
 export async function analyzeBettaImage({
@@ -14,13 +13,13 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 GOD ENGINE V11 START");
+    console.log("🔥 GOD ENGINE MASTER START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
      * =====================================================
-     * PASS 1 — STRUCTURE DETECTOR (NO LOCK TYPE)
+     * PASS 1 — MORPHOLOGY DETECTOR
      * =====================================================
      */
     const classify = await openai.responses.create({
@@ -34,15 +33,15 @@ export async function analyzeBettaImage({
               text: `
 คุณคือ Morphology Detector ปลากัด
 
-ตรวจหา structure ต่อไปนี้:
-- Wild Body
-- Long Fin
-- Short Fin Plakat
-- Halfmoon Spread 180 Degree
-- Crowntail Spine
-- Elephant Ear Dumbo
-- Double Tail
-- Rosetail Feather
+ตรวจหา:
+Wild Body
+Long Fin
+Short Fin Plakat
+Halfmoon Spread
+Crowntail Spine
+Elephant Ear Dumbo
+Double Tail
+Rosetail Feather
 
 ตอบ TEXT ONLY
 `,
@@ -65,7 +64,7 @@ export async function analyzeBettaImage({
 
     /**
      * =====================================================
-     * PASS 2 — EXPERT JUDGE MASTER
+     * PASS 2 — MASTER PROMPT FINAL
      * =====================================================
      */
     const res = await openai.responses.create({
@@ -78,26 +77,81 @@ export async function analyzeBettaImage({
               type: "input_text",
               text: `
 SYSTEM ROLE:
-คุณคือ "กรรมการปลากัดระดับประกวด"
-
-วิเคราะห์แบบ breeder จริง:
-- ห้าม lock เป็น Wild/Fancy ถ้าไม่ชัด
-- วิเคราะห์ tail, fin, body, color pattern
-- ถ้าครีบอกใหญ่ต้องเรียก Elephant Ear (หูช้าง)
-- Halfmoon ต้องพูดถึง 180 องศา
-- Crowntail ต้องมี spine
-- Plakat = ครีบสั้น
+คุณคือ "ผู้ตัดสินปลากัดระดับประกวด (Professional Betta Judge)"
 
 Morphology = ${morph}
 
+================================================
+📊 วิเคราะห์ตาม Layer ต่อไปนี้
+================================================
+
+1️⃣ Origin Group
+- Wild Betta
+- Fancy Betta
+- Hybrid Fancy
+
+กฎ:
+- ถ้ามี Wild Body → ต้องเป็น Wild Betta
+- Wild ห้าม override เป็น Halfmoon
+
+------------------------------------------------
+
+2️⃣ Structure Type
+Halfmoon
+Crowntail
+Plakat
+Double Tail
+Veiltail
+Rosetail
+Dumbo Ear / Elephant Ear
+
+กฎ:
+- Crowntail Spine → Crowntail
+- Halfmoon Spread → ต้องพูดถึง 180°
+- Long Fin → ห้าม Plakat
+- Elephant Ear = ครีบอกใหญ่ ต้องมีคำว่า หูช้าง
+
+------------------------------------------------
+
+3️⃣ Pattern Type
+Marble
+Koi
+Fancy
+Galaxy
+Dragon Scale
+Patriotic
+
+Pattern ห้าม override Structure
+
+------------------------------------------------
+
+4️⃣ Color Group
+Red
+Blue
+Black
+Yellow
+Metallic
+White
+Multicolor
+
+================================================
+🧠 LOCKED RULES
+================================================
+Morphology Priority > Structure > Pattern > Color
+
+================================================
 ตอบ JSON ONLY:
 
 {
  "status":"success",
+ "origin_group":"",
+ "origin_group_th":"",
+ "structure_type":"",
+ "structure_type_th":"",
+ "pattern_type":"",
+ "pattern_type_th":"",
  "breed_estimate":"",
  "breed_estimate_th":"",
- "betta_group":"",
- "betta_group_th":"",
  "short_reason":"",
  "confidence":0
 }
@@ -135,7 +189,7 @@ Morphology = ${morph}
 
     /**
      * =====================================================
-     * 🧠 GOD JUDGE MASTER LOGIC
+     * 🧠 MASTER JUDGE LOGIC (FINAL)
      * =====================================================
      */
 
@@ -143,31 +197,32 @@ Morphology = ${morph}
 
     const reason = (data.short_reason || "").toLowerCase();
 
-    // ⭐ Elephant Ear Detection
-    if (
-      morph.includes("Elephant") ||
-      reason.includes("หูช้าง")
-    ) {
+    // ⭐ Wild Lock
+    if (morph.includes("Wild")) {
+      data.origin_group = "Wild Betta";
+      data.origin_group_th = "ปลากัดป่า";
+    }
+
+    // ⭐ Elephant Ear
+    if (morph.includes("Elephant") || reason.includes("หูช้าง")) {
       data.morphology =
         (data.morphology || "") + " Elephant Ear Dumbo";
     }
 
-    // ⭐ Halfmoon Rule
+    // ⭐ Structure Mapping
     if (morph.includes("Halfmoon")) {
-      data.betta_group = "Halfmoon";
-      data.betta_group_th = "ฮาฟมูน";
+      data.structure_type = "Halfmoon";
+      data.structure_type_th = "ฮาฟมูน";
     }
 
-    // ⭐ Crowntail Rule
     if (morph.includes("Crowntail")) {
-      data.betta_group = "Crowntail";
-      data.betta_group_th = "คราวน์เทล";
+      data.structure_type = "Crowntail";
+      data.structure_type_th = "คราวน์เทล";
     }
 
-    // ⭐ Plakat Rule
     if (morph.includes("Short")) {
-      data.betta_group = "Plakat";
-      data.betta_group_th = "ปลากัดครีบสั้น";
+      data.structure_type = "Plakat";
+      data.structure_type_th = "ปลากัดครีบสั้น";
     }
 
     // ⭐ Confidence Normalize
@@ -194,12 +249,7 @@ Morphology = ${morph}
         `${data.breed_estimate} (${data.breed_estimate_th})`;
     }
 
-    if (data.betta_group && data.betta_group_th) {
-      data.betta_group =
-        `${data.betta_group} (${data.betta_group_th})`;
-    }
-
-    console.log("✅ GOD ENGINE RESULT =", data);
+    console.log("✅ MASTER RESULT =", data);
 
     return data;
   } catch (err) {
