@@ -5,7 +5,8 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧠 GOD JUDGE V7 — STABLE MODE
+ * 🧬 BETTA AI — GOD ENGINE FINAL
+ * Dual Pass + Expert Judge + Stable JSON
  */
 
 export async function analyzeBettaImage({
@@ -13,14 +14,14 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 GOD JUDGE V7 START");
+    console.log("🔥 BETTA GOD ENGINE START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
-     * ============================
-     * STEP 1 — MORPHOLOGY LOCK
-     * ============================
+     * =====================================
+     * PASS 1 — MORPHOLOGY LOCK
+     * =====================================
      */
     const classify = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -57,9 +58,9 @@ Halfmoon Spread
     console.log("🧬 MORPH =", morph);
 
     /**
-     * ============================
-     * STEP 2 — AI ANALYZE
-     * ============================
+     * =====================================
+     * PASS 2 — FINAL BOSS ANALYSIS
+     * =====================================
      */
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -70,21 +71,70 @@ Halfmoon Spread
             {
               type: "input_text",
               text: `
-คุณคือ Thai Betta Judge
+SYSTEM ROLE:
+คุณคือ AI วิเคราะห์ปลากัดระดับผู้เชี่ยวชาญ
 
 Morphology = ${morph}
 
-ตอบ JSON:
+================================================
+PASS 1 — VISUAL FEATURE EXTRACTION
+================================================
+- tail_shape
+- tail_spread_degree
+- fin_length
+- dorsal_size
+- body_structure
+- primary_color
+- secondary_color
+- color_pattern
+- metallic
 
+================================================
+PASS 2 — GROUP CLASSIFICATION
+================================================
+WILD:
+Betta splendens
+Betta mahachaiensis
+Betta imbellis
+Betta smaragdina
+Betta prima
+Betta stiktos
+
+FANCY:
+Halfmoon, Over Halfmoon, Crowntail,
+Plakat, Veiltail, Double Tail,
+Delta, Super Delta, Rosetail,
+Feathertail, Dumbo Ear
+
+================================================
+PASS 3 — CONFIDENCE
+================================================
+เริ่ม 0.50
++0.15 ถ้า tail ชัด
++0.10 ถ้าสีชัด
++0.10 ถ้าภาพชัด
+
+================================================
+ตอบ JSON ONLY:
 {
-"main_species_th":"",
-"main_species_en":"",
-"breed_category_th":"",
-"breed_category_en":"",
-"color_traits":"",
-"grade":"",
-"confidence_score":0,
-"analysis":""
+  "status":"",
+  "features":{
+    "tail_shape":"",
+    "tail_spread_degree":0,
+    "fin_length":"",
+    "dorsal_size":"",
+    "body_structure":"",
+    "primary_color":"",
+    "secondary_color":"",
+    "color_pattern":"",
+    "metallic":false
+  },
+  "betta_group":"",
+  "wild_species":"",
+  "tail_type":"",
+  "breed_estimate":"",
+  "short_reason":"",
+  "confidence":0
 }
 `,
             },
@@ -97,6 +147,11 @@ Morphology = ${morph}
       ],
     });
 
+    /**
+     * =====================================
+     * SAFE JSON PARSER
+     * =====================================
+     */
     let data;
 
     if (res.output?.[0]?.content?.[0]?.json) {
@@ -108,51 +163,40 @@ Morphology = ${morph}
     }
 
     /**
-     * ======================================
-     * 🧬 GOD JUDGE ENGINE (BIO FILTER)
-     * ======================================
+     * =====================================
+     * 🧠 GOD JUDGE ENGINE
+     * =====================================
      */
 
     data.morphology = morph;
 
-    const analysis = (data.analysis || "").toLowerCase();
+    const reason = (data.short_reason || "").toLowerCase();
 
-    // ⭐ Rule 1 — Wild lock
-    if (morph.includes("Wild") || analysis.includes("wild")) {
-      data.main_species_th = "ปลากัดป่า";
-      data.main_species_en = "Wild Betta";
-      data.breed_category_th = "ปลากัดป่า";
-      data.breed_category_en = "Wild Betta";
+    // ⭐ Wild lock
+    if (morph.includes("Wild")) {
+      data.betta_group = "WILD";
     }
 
-    // ⭐ Rule 2 — Long Fin ห้ามเป็นหม้อ
-    if (morph.includes("Long") && data.main_species_th === "ปลากัดหม้อ") {
-      data.main_species_th = "ปลากัดประกวด";
-      data.main_species_en = "Show Betta";
+    // ⭐ Long fin ห้าม Plakat
+    if (morph.includes("Long") && data.tail_type === "Plakat") {
+      data.tail_type = "Halfmoon";
     }
 
-    // ⭐ Rule 3 — ไม่มีหนาม ห้าม Crowntail
-    if (!analysis.includes("หนาม") && data.breed_category_en?.includes("Crowntail")) {
-      data.breed_category_th = "ปลากัดสวยงาม";
-      data.breed_category_en = "Domestic Betta";
+    // ⭐ ไม่มีหนาม ห้าม Crowntail
+    if (!reason.includes("หนาม") && data.tail_type === "Crowntail") {
+      data.tail_type = "Domestic";
     }
 
-    // ⭐ Rule 4 — ลำตัวเรียว bias wild
-    if (analysis.includes("ลำตัวเรียว")) {
-      data.main_species_th = "ปลากัดป่า";
-      data.main_species_en = "Wild Betta";
+    // ⭐ Confidence normalize
+    if (!data.confidence || data.confidence < 0.6) {
+      data.confidence = 0.68;
     }
 
-    // ⭐ Confidence normalization
-    if (!data.confidence_score || data.confidence_score < 60) {
-      data.confidence_score = 68;
-    }
-
-    console.log("✅ GOD V7 RESULT =", data);
+    console.log("✅ BETTA GOD RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 GOD V7 ERROR:", err);
+    console.error("🔥 BETTA GOD ERROR:", err);
     throw err;
   }
 }
