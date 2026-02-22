@@ -5,10 +5,11 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧠 GOD ENGINE V18 — STABLE WILD LOCK
- * ✔ Wild Priority Lock
- * ✔ Stop Halfmoon Fake
- * ✔ Stop Crowntail Fake
+ * 🧠 GOD ENGINE V19 — SAFE LOCK
+ * ✔ Betta Guard Level 2
+ * ✔ Wild Hard Lock
+ * ✔ JSON Safe Parse
+ * ✔ Anti Off-topic
  */
 
 export async function analyzeBettaImage({
@@ -16,13 +17,13 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 GOD ENGINE V18 START");
+    console.log("🔥 GOD ENGINE V19 START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
      * =====================================================
-     * PASS 0 — BETTA ONLY GUARD
+     * PASS 0 — BETTA ONLY GUARD (LEVEL 2)
      * =====================================================
      */
     const bettaCheck = await openai.responses.create({
@@ -34,12 +35,14 @@ export async function analyzeBettaImage({
             {
               type: "input_text",
               text: `
-ตรวจว่าเป็นปลากัด Betta เท่านั้น
+คุณคือ AI ตรวจสอบปลากัด
 
-ตอบ ONLY:
-BETTA
-หรือ
-NOT_BETTA
+กฎ:
+- ดูเฉพาะภาพ
+- ถ้าไม่ใช่ Betta ให้ตอบ NOT_BETTA
+- ถ้าใช่ Betta ให้ตอบ BETTA
+
+TEXT ONLY
 `,
             },
           ],
@@ -56,22 +59,24 @@ NOT_BETTA
       bettaCheck.output_text ||
       "";
 
+    console.log("🧪 BETTA CHECK =", bettaType);
+
     if (!bettaType.toLowerCase().includes("betta")) {
       return {
         status: "not_supported",
         breed_estimate: "Not Betta",
         betta_group: "Unknown",
         short_reason: "ระบบรองรับเฉพาะปลากัดเท่านั้น",
+        morphology: "Unknown",
         confidence: 100,
       };
     }
 
     /**
      * =====================================================
-     * PASS 1 — HARD WILD DETECTOR (LOCKED)
+     * PASS 1 — HARD WILD LOCK
      * =====================================================
      */
-
     const wildCheck = await openai.responses.create({
       model: "gpt-4.1-mini",
       input: [
@@ -83,19 +88,14 @@ NOT_BETTA
               text: `
 คุณคือผู้เชี่ยวชาญ Wild Betta
 
-กฎสำคัญ:
-- ลำตัวเรียวยาว
-- ครีบไม่กาง 180
-- ไม่มี web reduction จริง
-- ไม่มี Dumbo
+กฎ:
+- Wild = ลำตัวเรียวยาว ครีบไม่ 180 ไม่มี web reduction
+- Fancy = เฉพาะประกวดจริง
 
-ถ้าเป็น Wild Form ให้ตอบ:
+ตอบ ONLY:
 WILD
-
-ถ้าเป็น Fancy จริงเท่านั้น:
+หรือ
 FANCY
-
-TEXT ONLY
 `,
             },
           ],
@@ -114,9 +114,6 @@ TEXT ONLY
 
     console.log("🧪 WILD CHECK =", wildType);
 
-    /**
-     * ⭐⭐⭐ HARD LOCK ⭐⭐⭐
-     */
     if (wildType.toLowerCase().includes("wild")) {
       return {
         status: "success",
@@ -132,10 +129,9 @@ TEXT ONLY
 
     /**
      * =====================================================
-     * PASS 2 — MORPHOLOGY DETECTOR (STRICT)
+     * PASS 2 — MORPHOLOGY STRICT
      * =====================================================
      */
-
     const classify = await openai.responses.create({
       model: "gpt-4.1-mini",
       input: [
@@ -147,8 +143,8 @@ TEXT ONLY
               text: `
 ตรวจ morphology ปลากัดอย่างเข้มงวด
 
-Halfmoon = ต้องกาง 180 องศาชัดเจน
-Crowntail = ต้องมี web reduction จริง
+Halfmoon = ต้อง 180 องศาจริง
+Crowntail = ต้องมี spine จริง
 Dumbo = ครีบอกใหญ่จริง
 
 ตอบ TEXT ONLY
@@ -172,10 +168,9 @@ Dumbo = ครีบอกใหญ่จริง
 
     /**
      * =====================================================
-     * PASS 3 — FINAL JUDGE
+     * PASS 3 — FINAL JUDGE (STRICT JSON)
      * =====================================================
      */
-
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
       input: [
@@ -189,10 +184,10 @@ Dumbo = ครีบอกใหญ่จริง
 
 Morphology = ${morph}
 
-ห้ามเดา Halfmoon ถ้าไม่ 180 จริง
-ห้ามเดา Crowntail ถ้าไม่มี spine จริง
-
-ตอบ JSON ONLY:
+กฎ:
+- ห้ามเดา
+- ห้ามตอบเรื่องอื่น
+- ตอบ JSON เท่านั้น
 
 {
  "status":"success",
@@ -229,7 +224,7 @@ Morphology = ${morph}
     data.morphology = morph;
 
     /**
-     * GROUP PRIORITY
+     * GROUP PRIORITY FIX
      */
     const m = morph.toLowerCase();
 
@@ -242,18 +237,18 @@ Morphology = ${morph}
     }
 
     /**
-     * CONFIDENCE FIX
+     * CONFIDENCE NORMALIZE
      */
     let conf = data.confidence ?? 75;
     if (conf <= 1) conf = Math.round(conf * 100);
     if (conf > 100) conf = 90;
     data.confidence = conf;
 
-    console.log("✅ GOD ENGINE V18 RESULT =", data);
+    console.log("✅ GOD ENGINE V19 RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 GOD ENGINE V18 ERROR:", err);
+    console.error("🔥 GOD ENGINE V19 ERROR:", err);
     throw err;
   }
 }

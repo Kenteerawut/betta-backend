@@ -24,6 +24,12 @@ app.use(
 app.use(express.json());
 
 /**
+ * 🔥 ULTRA FIX — SERVE UPLOADED IMAGES
+ * ถ้าไม่มีบรรทัดนี้ รูปจะไม่ขึ้นหน้า records
+ */
+app.use("/uploads", express.static("uploads"));
+
+/**
  * ✅ Health check
  */
 app.get("/", (req, res) => {
