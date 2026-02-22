@@ -5,11 +5,7 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧬 BETTA GOD ENGINE V12 — FINAL DEFENSE VERSION
- * ✔ Wild priority
- * ✔ Dumbo detection
- * ✔ Crowntail not override Wild
- * ✔ Breeder Logic จริง
+ * 🧬 BETTA GOD ENGINE V12 — FINAL DEFENSE VERSION (FIXED)
  */
 
 export async function analyzeBettaImage({
@@ -23,7 +19,7 @@ export async function analyzeBettaImage({
 
     /**
      * =====================================================
-     * PASS 1 — STRUCTURE DETECTOR (MULTI LABEL)
+     * PASS 1 — STRUCTURE DETECTOR
      * =====================================================
      */
     const classify = await openai.responses.create({
@@ -37,7 +33,7 @@ export async function analyzeBettaImage({
               text: `
 คุณคือ Morphology Detector ปลากัด (Breeder Standard)
 
-ตรวจหาโครงสร้าง:
+ตรวจหา:
 - Wild Body
 - Long Fin
 - Short Fin Plakat
@@ -68,7 +64,7 @@ export async function analyzeBettaImage({
 
     /**
      * =====================================================
-     * PASS 2 — EXPERT JUDGE MASTER
+     * PASS 2 — EXPERT JUDGE
      * =====================================================
      */
     const res = await openai.responses.create({
@@ -116,9 +112,10 @@ Morphology = ${morph}
 
     /**
      * =====================================================
-     * SAFE JSON PARSER
+     * ⭐ SAFE JSON PARSER (FIX CRASH)
      * =====================================================
      */
+    let data = {}; // ⭐ FIX สำคัญมาก
 
     try {
       let text =
@@ -135,7 +132,7 @@ Morphology = ${morph}
 
     /**
      * =====================================================
-     * 🧠 GOD JUDGE FINAL PRIORITY SYSTEM
+     * 🧠 GOD JUDGE PRIORITY SYSTEM
      * =====================================================
      */
 
@@ -147,37 +144,22 @@ Morphology = ${morph}
     let groupEN = "";
     let groupTH = "";
 
-    /**
-     * PRIORITY ORDER (สำคัญมาก)
-     * Wild > Dumbo > Crowntail > Halfmoon > Plakat
-     */
+    // ⭐ PRIORITY ORDER
+    // Wild > Dumbo > Crowntail > Halfmoon > Plakat
 
-    // ⭐ 1. WILD FIRST
     if (m.includes("wild")) {
       groupEN = "Wild Betta";
       groupTH = "ปลากัดป่า";
-    }
-
-    // ⭐ 2. DUMBO (Elephant Ear)
-    else if (m.includes("elephant") || r.includes("หูช้าง")) {
+    } else if (m.includes("elephant") || r.includes("หูช้าง")) {
       groupEN = "Dumbo Elephant Ear";
       groupTH = "หูช้าง";
-    }
-
-    // ⭐ 3. CROWNTAIL (ต้องไม่ใช่ wild)
-    else if (m.includes("crowntail") && !m.includes("wild")) {
+    } else if (m.includes("crowntail") && !m.includes("wild")) {
       groupEN = "Crowntail";
       groupTH = "คราวน์เทล";
-    }
-
-    // ⭐ 4. HALFMOON
-    else if (m.includes("halfmoon")) {
+    } else if (m.includes("halfmoon")) {
       groupEN = "Halfmoon";
       groupTH = "ฮาฟมูน";
-    }
-
-    // ⭐ 5. PLAKAT
-    else if (m.includes("short")) {
+    } else if (m.includes("short")) {
       groupEN = "Plakat";
       groupTH = "ปลากัดครีบสั้น";
     }
@@ -188,7 +170,7 @@ Morphology = ${morph}
 
     /**
      * =====================================================
-     * ⭐ MORPHOLOGY ENHANCEMENT (DUMBO FIX)
+     * ⭐ DUMBO ENHANCE
      * =====================================================
      */
     if (m.includes("elephant") || r.includes("หูช้าง")) {
@@ -215,7 +197,7 @@ Morphology = ${morph}
 
     /**
      * =====================================================
-     * ⭐ COMBINE TH + EN DISPLAY
+     * ⭐ COMBINE TH + EN
      * =====================================================
      */
     if (data.breed_estimate && data.breed_estimate_th) {
