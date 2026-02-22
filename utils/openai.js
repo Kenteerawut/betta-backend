@@ -9,14 +9,14 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 BETTA GOD ENGINE START");
+    console.log("🔥 GOD JUDGE THAI PRO+ START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
-     * ======================================
-     * PASS 1 — MORPHOLOGY CLASSIFIER
-     * ======================================
+     * =========================
+     * PASS 1 — MORPHOLOGY
+     * =========================
      */
     const classify = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -52,12 +52,10 @@ Halfmoon Spread
       classify.output_text ||
       "Unknown";
 
-    console.log("🧬 MORPH =", morph);
-
     /**
-     * ======================================
-     * PASS 2 — THAI ANALYSIS ENGINE
-     * ======================================
+     * =========================
+     * PASS 2 — GOD JUDGE THAI PRO+
+     * =========================
      */
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -68,36 +66,25 @@ Halfmoon Spread
             {
               type: "input_text",
               text: `
-SYSTEM ROLE:
-คุณคือ AI ผู้เชี่ยวชาญการวิเคราะห์ปลากัดระดับกรรมการประกวด
+คุณคือ AI กรรมการวิเคราะห์ปลากัดมืออาชีพ
 
 Morphology = ${morph}
 
-⚠️ กฎสำคัญ:
-- ตอบเป็นภาษาไทยเท่านั้น
-- ห้ามใช้ภาษาอังกฤษ
-- ตอบ JSON ONLY
-- confidence ต้องเป็นเลข 0.0 ถึง 1.0
+กฎ:
+- ตอบภาษาไทยเป็นหลัก
+- สายพันธุ์ต้องมี อังกฤษ + ไทย ในวงเล็บ
+- กลุ่มต้องมี อังกฤษ + ไทย ในวงเล็บ
+- confidence ต้องอยู่ระหว่าง 0.0 ถึง 1.0 เท่านั้น
+- ห้ามใส่ %
 
-รูปแบบ JSON:
+ตอบ JSON ONLY:
 
 {
   "status":"success",
-  "features":{
-    "tail_shape":"",
-    "tail_spread_degree":0,
-    "fin_length":"",
-    "dorsal_size":"",
-    "body_structure":"",
-    "primary_color":"",
-    "secondary_color":"",
-    "color_pattern":"",
-    "metallic":false
-  },
   "betta_group":"",
-  "wild_species":"",
-  "tail_type":"",
+  "betta_group_th":"",
   "breed_estimate":"",
+  "breed_estimate_th":"",
   "short_reason":"",
   "confidence":0.0
 }
@@ -113,9 +100,9 @@ Morphology = ${morph}
     });
 
     /**
-     * ======================================
-     * SAFE JSON PARSER (NO CRASH)
-     * ======================================
+     * =========================
+     * SAFE JSON PARSER
+     * =========================
      */
     let data = {};
 
@@ -137,31 +124,34 @@ Morphology = ${morph}
     }
 
     /**
-     * ======================================
+     * =========================
      * 🧠 GOD JUDGE ENGINE
-     * ======================================
+     * =========================
      */
 
     data.morphology = morph;
 
-    const reason = (data.short_reason || "").toLowerCase();
-
-    // ⭐ Wild Lock
     if (morph.includes("Wild")) {
       data.betta_group = "WILD";
+      data.betta_group_th = "สายป่า";
     }
 
-    // ⭐ Long fin ห้าม Plakat
-    if (morph.includes("Long") && data.tail_type === "Plakat") {
-      data.tail_type = "Halfmoon";
+    /**
+     * ⭐ รวมไทย+อังกฤษ
+     */
+    if (data.breed_estimate && data.breed_estimate_th) {
+      data.breed_estimate =
+        `${data.breed_estimate} (${data.breed_estimate_th})`;
     }
 
-    // ⭐ ไม่มีหนาม ห้าม Crowntail
-    if (!reason.includes("หนาม") && data.tail_type === "Crowntail") {
-      data.tail_type = "Domestic";
+    if (data.betta_group && data.betta_group_th) {
+      data.betta_group =
+        `${data.betta_group} (${data.betta_group_th})`;
     }
 
-    // ⭐ Normalize Confidence (กัน 9500%)
+    /**
+     * ⭐ Normalize Confidence (กัน 9500%)
+     */
     if (typeof data.confidence === "number") {
       if (data.confidence <= 1) {
         data.confidence = Number(data.confidence.toFixed(2));
@@ -172,11 +162,11 @@ Morphology = ${morph}
       data.confidence = 0.68;
     }
 
-    console.log("✅ BETTA GOD RESULT =", data);
+    console.log("✅ GOD JUDGE THAI PRO+ RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 BETTA GOD ERROR:", err);
+    console.error("🔥 GOD JUDGE ERROR:", err);
     throw err;
   }
 }
