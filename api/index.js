@@ -12,33 +12,41 @@ import { connectDB } from "./db.js";
 const app = express();
 
 /**
- * ✅ CORS – รองรับ Railway + Mobile Safari (Express 5 compatible)
+ * ==============================
+ * ✅ CORS (Railway + Mobile Safari SAFE)
+ * ==============================
  */
 app.use(
   cors({
     origin: true,
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-app.use(express.json());
+/**
+ * ✅ JSON parser
+ */
+app.use(express.json({ limit: "10mb" }));
 
 /**
+ * ==============================
  * ✅ Health check
+ * ==============================
  */
 app.get("/", (req, res) => {
   res.send("Betta Backend is running");
 });
 
-/**
- * ✅ API root
- */
 app.get("/api", (req, res) => {
   res.json({ ok: true, message: "API running on Railway" });
 });
 
 /**
- * ✅ Routes
+ * ==============================
+ * ✅ API Routes
+ * ==============================
  */
 app.use("/api/analyze", analyzeRoutes);
 app.use("/api/auth", authRoutes);
@@ -46,7 +54,22 @@ app.use("/api/records", recordRoutes);
 app.use("/api/chat", chatRoutes);
 
 /**
- * ✅ Start server
+ * ==============================
+ * ❗ Global Error Handler (สำคัญมาก)
+ * กัน server crash แล้ว analyze เพี้ยน
+ * ==============================
+ */
+app.use((err, req, res, next) => {
+  console.error("🔥 GLOBAL ERROR:", err);
+  res.status(500).json({
+    error: "internal_server_error",
+  });
+});
+
+/**
+ * ==============================
+ * ✅ Start Server
+ * ==============================
  */
 const PORT = process.env.PORT || 3000;
 

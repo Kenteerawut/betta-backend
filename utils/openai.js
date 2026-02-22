@@ -5,11 +5,12 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧬 GOD ENGINE V17 — FULL LOCK BREEDER MODE
- * ✔ Wild Gate จริง
- * ✔ Lock Betta Only
- * ✔ Stop Goldfish / ปลาอื่น
- * ✔ Morphology Priority Fix
+ * 🧬 GOD ENGINE V18 — BREEDER SAFE MODE
+ * FIX:
+ * - Stop hallucinated Crowntail
+ * - Stop Fake Dumbo
+ * - Halfmoon needs 180°
+ * - Morphology becomes HARD RULE
  */
 
 export async function analyzeBettaImage({
@@ -17,41 +18,27 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 GOD ENGINE V17 START");
+    console.log("🔥 GOD ENGINE V18 START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
-     * =====================================================
-     * 🧠 PASS 0 — BETTA ONLY GUARD
-     * =====================================================
+     * ============================
+     * PASS 0 — BETTA CHECK
+     * ============================
      */
-
     const bettaCheck = await openai.responses.create({
       model: "gpt-4.1-mini",
       input: [
         {
           role: "system",
-          content: [{
-            type: "input_text",
-            text: `
-ตรวจว่าคือ "ปลากัด Betta" หรือไม่
-
-ถ้าไม่ใช่ปลากัดให้ตอบ:
-NOT_BETTA
-
-ถ้าใช่ตอบ:
-BETTA
-
-ตอบ TEXT ONLY
-`
-          }]
+          content: [{ type: "input_text", text: `ตรวจว่าเป็นปลากัดหรือไม่ ตอบ BETTA หรือ NOT_BETTA` }],
         },
         {
           role: "user",
-          content: [{ type:"input_image", image_url:imageDataUrl }]
-        }
-      ]
+          content: [{ type: "input_image", image_url: imageDataUrl }],
+        },
+      ],
     });
 
     const bettaType =
@@ -61,44 +48,31 @@ BETTA
 
     if (!bettaType.toLowerCase().includes("betta")) {
       return {
-        status:"not_supported",
-        breed_estimate:"Not Betta",
-        betta_group:"Unknown",
-        short_reason:"ระบบรองรับเฉพาะปลากัดเท่านั้น",
-        confidence:100
+        status: "not_supported",
+        breed_estimate: "Not Betta",
+        betta_group: "Unknown",
+        short_reason: "ระบบรองรับเฉพาะปลากัด",
+        confidence: 100,
       };
     }
 
     /**
-     * =====================================================
-     * 🧬 PASS 1 — WILD DETECTOR (สำคัญมาก)
-     * =====================================================
+     * ============================
+     * PASS 1 — WILD DETECTOR
+     * ============================
      */
-
     const wildCheck = await openai.responses.create({
       model: "gpt-4.1-mini",
       input: [
         {
-          role:"system",
-          content:[{
-            type:"input_text",
-            text:`
-ตรวจว่าเป็น Wild Betta หรือ Fancy Betta
-
-Wild = imbellis / mahachai / smaragdina / wild form
-
-ตอบ ONLY:
-WILD
-หรือ
-FANCY
-`
-          }]
+          role: "system",
+          content: [{ type: "input_text", text: `Wild หรือ Fancy เท่านั้น ตอบ WILD หรือ FANCY` }],
         },
         {
-          role:"user",
-          content:[{ type:"input_image", image_url:imageDataUrl }]
-        }
-      ]
+          role: "user",
+          content: [{ type: "input_image", image_url: imageDataUrl }],
+        },
+      ],
     });
 
     const wildType =
@@ -108,173 +82,113 @@ FANCY
 
     if (wildType.toLowerCase().includes("wild")) {
       return {
-        status:"success",
-        breed_estimate:"Wild Betta",
-        breed_estimate_th:"ปลากัดป่า",
-        betta_group:"Wild Betta (ปลากัดป่า)",
-        short_reason:"ลักษณะโครงสร้างเป็น Wild Form ไม่ใช่สายประกวด",
-        morphology:"Wild Body",
-        confidence:95
+        status: "success",
+        breed_estimate: "Wild Betta",
+        breed_estimate_th: "ปลากัดป่า",
+        betta_group: "Wild Betta",
+        morphology: "Wild Body",
+        confidence: 95,
       };
     }
 
     /**
-     * =====================================================
-     * PASS 2 — MORPHOLOGY DETECTOR
-     * =====================================================
+     * ============================
+     * PASS 2 — MORPHOLOGY SCAN
+     * ============================
      */
 
     const classify = await openai.responses.create({
-      model:"gpt-4.1-mini",
-      input:[
+      model: "gpt-4.1-mini",
+      input: [
         {
-          role:"system",
-          content:[{
-            type:"input_text",
-            text:`
-คุณคือ Morphology Detector ปลากัด
+          role: "system",
+          content: [{
+            type: "input_text",
+            text: `
+ตรวจ morphology เท่านั้น ห้ามตั้งสายพันธุ์
 
-ตรวจหา:
-- Long Fin
-- Halfmoon Spread 180 Degree
-- Crowntail Spine (web reduction จริงเท่านั้น)
-- Elephant Ear Dumbo
-- Plakat Short Fin
-
-ตอบ TEXT ONLY
-`
-          }]
+ให้ตอบคำเหล่านี้เท่านั้น:
+LONG_FIN
+HALFMOON_180
+CROWNTAIL_WEB_REDUCTION
+DUMBO_PECTORAL
+PLAKAT_SHORT
+UNKNOWN
+`,
+          }],
         },
         {
-          role:"user",
-          content:[{ type:"input_image", image_url:imageDataUrl }]
-        }
-      ]
+          role: "user",
+          content: [{ type: "input_image", image_url: imageDataUrl }],
+        },
+      ],
     });
 
-    const morph =
+    let morph =
       classify.output?.[0]?.content?.[0]?.text ||
       classify.output_text ||
-      "Unknown";
+      "UNKNOWN";
+
+    morph = morph.toUpperCase();
 
     console.log("🧬 MORPH =", morph);
 
     /**
-     * =====================================================
-     * PASS 3 — EXPERT JUDGE
-     * =====================================================
+     * ============================
+     * 🔒 HARD RULE GROUP DECISION
+     * ============================
      */
 
-    const res = await openai.responses.create({
-      model:"gpt-4.1-mini",
-      input:[
-        {
-          role:"system",
-          content:[{
-            type:"input_text",
-            text:`
-คุณคือกรรมการปลากัดระดับประกวด
+    let group = "Unknown";
+    let breed = "Betta splendens";
 
-Morphology = ${morph}
-
-กฎสำคัญ:
-- ห้ามเดาปลากัดป่า
-- Halfmoon ต้อง 180 องศา
-- Crowntail ต้อง web reduction จริง
-- Dumbo ต้องครีบอกใหญ่
-
-ตอบ JSON ONLY:
-
-{
- "status":"success",
- "breed_estimate":"",
- "breed_estimate_th":"",
- "betta_group":"",
- "betta_group_th":"",
- "short_reason":"",
- "confidence":0
-}
-`
-          }]
-        },
-        {
-          role:"user",
-          content:[{ type:"input_image", image_url:imageDataUrl }]
-        }
-      ]
-    });
-
-    /**
-     * =====================================================
-     * SAFE JSON PARSER
-     * =====================================================
-     */
-
-    let data = {};
-    try {
-      let text =
-        res.output?.[0]?.content?.[0]?.text ||
-        res.output_text ||
-        "{}";
-
-      text = text.replace(/```json/gi,"").replace(/```/g,"").trim();
-      data = JSON.parse(text);
-    } catch {
-      data = { status:"parse_error" };
+    if (morph.includes("CROWNTAIL_WEB_REDUCTION")) {
+      group = "Crowntail (คราวน์เทล)";
     }
-
-    data.morphology = morph;
-
-    /**
-     * =====================================================
-     * 🧠 FINAL GROUP PRIORITY
-     * =====================================================
-     */
-
-    const m = morph.toLowerCase();
-
-    if (m.includes("elephant")) {
-      data.betta_group = "Dumbo Elephant Ear (หูช้าง)";
+    else if (morph.includes("HALFMOON_180")) {
+      group = "Halfmoon (ฮาฟมูน)";
     }
-    else if (m.includes("crowntail")) {
-      data.betta_group = "Crowntail (คราวน์เทล)";
+    else if (morph.includes("PLAKAT_SHORT")) {
+      group = "Plakat (ปลากัดครีบสั้น)";
     }
-    else if (m.includes("halfmoon")) {
-      data.betta_group = "Halfmoon (ฮาฟมูน)";
-    }
-    else if (m.includes("short")) {
-      data.betta_group = "Plakat (ปลากัดครีบสั้น)";
+    else if (morph.includes("LONG_FIN")) {
+      group = "Long Fin Betta";
     }
 
     /**
-     * =====================================================
-     * CONFIDENCE NORMALIZE
-     * =====================================================
+     * ============================
+     * DUMBO ADDON ONLY
+     * ============================
      */
-
-    let conf = data.confidence ?? 0;
-
-    if (typeof conf === "number") {
-      if (conf <= 1) conf = Math.round(conf * 100);
-      else if (conf <= 100) conf = Math.round(conf);
-      else conf = 90;
-    } else {
-      conf = 75;
+    if (morph.includes("DUMBO_PECTORAL")) {
+      group += " + Dumbo";
     }
 
-    data.confidence = conf;
+    /**
+     * ============================
+     * CONFIDENCE LOGIC
+     * ============================
+     */
+    let confidence = 85;
 
-    if (data.breed_estimate && data.breed_estimate_th) {
-      data.breed_estimate =
-        `${data.breed_estimate} (${data.breed_estimate_th})`;
-    }
+    if (morph.includes("UNKNOWN")) confidence = 70;
+    if (morph.includes("HALFMOON_180")) confidence = 95;
+    if (morph.includes("CROWNTAIL_WEB_REDUCTION")) confidence = 95;
 
-    console.log("✅ GOD ENGINE V17 RESULT =", data);
+    const result = {
+      status: "success",
+      breed_estimate: breed,
+      betta_group: group,
+      morphology: morph,
+      short_reason: "วิเคราะห์จากโครงสร้างครีบและ morphology จริง",
+      confidence,
+    };
 
-    return data;
+    console.log("✅ GOD ENGINE V18 RESULT =", result);
 
+    return result;
   } catch (err) {
-    console.error("🔥 GOD ENGINE V17 ERROR:", err);
+    console.error("🔥 GOD ENGINE V18 ERROR:", err);
     throw err;
   }
 }
