@@ -5,8 +5,7 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧬 BETTA AI — GOD ENGINE FINAL
- * Dual Pass + Expert Judge + Stable JSON
+ * 🧬 BETTA AI — GOD ENGINE PRO (RAILWAY SAFE)
  */
 
 export async function analyzeBettaImage({
@@ -20,7 +19,7 @@ export async function analyzeBettaImage({
 
     /**
      * =====================================
-     * PASS 1 — MORPHOLOGY LOCK
+     * PASS 1 — MORPHOLOGY CLASSIFIER
      * =====================================
      */
     const classify = await openai.responses.create({
@@ -54,16 +53,22 @@ Halfmoon Spread
       ],
     });
 
-    const morph = (classify.output_text || "Unknown").trim();
+    // ✅ SAFE READ OUTPUT
+    const morph =
+      classify.output?.[0]?.content?.[0]?.text ||
+      classify.output_text ||
+      "Unknown";
+
     console.log("🧬 MORPH =", morph);
 
     /**
      * =====================================
-     * PASS 2 — FINAL BOSS ANALYSIS
+     * PASS 2 — FINAL ANALYSIS (JSON LOCK)
      * =====================================
      */
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
+      response_format: { type: "json_object" }, // ⭐ สำคัญมาก กัน parse พัง
       input: [
         {
           role: "system",
@@ -114,28 +119,7 @@ PASS 3 — CONFIDENCE
 +0.10 ถ้าสีชัด
 +0.10 ถ้าภาพชัด
 
-================================================
-ตอบ JSON ONLY:
-{
-  "status":"",
-  "features":{
-    "tail_shape":"",
-    "tail_spread_degree":0,
-    "fin_length":"",
-    "dorsal_size":"",
-    "body_structure":"",
-    "primary_color":"",
-    "secondary_color":"",
-    "color_pattern":"",
-    "metallic":false
-  },
-  "betta_group":"",
-  "wild_species":"",
-  "tail_type":"",
-  "breed_estimate":"",
-  "short_reason":"",
-  "confidence":0
-}
+ตอบ JSON ONLY
 `,
             },
           ],
@@ -149,17 +133,18 @@ PASS 3 — CONFIDENCE
 
     /**
      * =====================================
-     * SAFE JSON PARSER
+     * SAFE JSON READ (NO CRASH)
      * =====================================
      */
     let data;
 
-    if (res.output?.[0]?.content?.[0]?.json) {
-      data = res.output[0].content[0].json;
-    } else {
-      let text = res.output_text || "";
-      text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-      data = JSON.parse(text);
+    try {
+      data =
+        res.output?.[0]?.content?.[0]?.json ||
+        JSON.parse(res.output_text || "{}");
+    } catch (e) {
+      console.log("⚠️ JSON FALLBACK");
+      data = { status: "parse_error" };
     }
 
     /**
