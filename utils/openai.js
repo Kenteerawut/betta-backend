@@ -5,8 +5,8 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧬 BETTA GOD ENGINE V11 — FULL TAXONOMY
- * Origin → Structure → Pattern → Breed
+ * 🧬 BETTA GOD ENGINE V11 — FINAL MASTER
+ * วิเคราะห์ได้ทุกสาย ไม่ bias
  */
 
 export async function analyzeBettaImage({
@@ -20,7 +20,7 @@ export async function analyzeBettaImage({
 
     /**
      * =====================================================
-     * PASS 1 — MORPHOLOGY SCAN
+     * PASS 1 — STRUCTURE DETECTOR (NO LOCK TYPE)
      * =====================================================
      */
     const classify = await openai.responses.create({
@@ -32,18 +32,19 @@ export async function analyzeBettaImage({
             {
               type: "input_text",
               text: `
-คุณคือ Betta Morphology Scanner
+คุณคือ Morphology Detector ปลากัด
 
-เลือกได้หลายค่า:
-Wild Body
-Long Fin
-Short Fin
-Crowntail Spine
-Halfmoon Spread
-Plakat Form
-Double Tail
+ตรวจหา structure ต่อไปนี้:
+- Wild Body
+- Long Fin
+- Short Fin Plakat
+- Halfmoon Spread 180 Degree
+- Crowntail Spine
+- Elephant Ear Dumbo
+- Double Tail
+- Rosetail Feather
 
-ตอบ TEXT เท่านั้น
+ตอบ TEXT ONLY
 `,
             },
           ],
@@ -64,7 +65,7 @@ Double Tail
 
     /**
      * =====================================================
-     * PASS 2 — FULL TAXONOMY JUDGE
+     * PASS 2 — EXPERT JUDGE MASTER
      * =====================================================
      */
     const res = await openai.responses.create({
@@ -77,53 +78,26 @@ Double Tail
               type: "input_text",
               text: `
 SYSTEM ROLE:
-คุณคือกรรมการประกวดปลากัดระดับ breeder
+คุณคือ "กรรมการปลากัดระดับประกวด"
 
-วิเคราะห์เป็น 4 Layer:
+วิเคราะห์แบบ breeder จริง:
+- ห้าม lock เป็น Wild/Fancy ถ้าไม่ชัด
+- วิเคราะห์ tail, fin, body, color pattern
+- ถ้าครีบอกใหญ่ต้องเรียก Elephant Ear (หูช้าง)
+- Halfmoon ต้องพูดถึง 180 องศา
+- Crowntail ต้องมี spine
+- Plakat = ครีบสั้น
 
-1️⃣ origin_group:
-- WILD
-- FANCY
-- HYBRID
-
-2 people's Structure:
-Halfmoon
-Crowntail
-Plakat
-Double Tail
-Veiltail
-Rosetail
-Dumbo Ear
-
-3️⃣ pattern_type:
-Marble
-Fancy
-Galaxy
-Koi
-Nemo
-Samurai
-Flag Pattern
-Dragon Scale
-Metallic
-
-กฎสำคัญ:
-- Halfmoon ต้องกล่าวถึง 180°
-- หนามยาว = Crowntail
-- สีแดง ขาว น้ำเงิน = Flag Pattern
-- ห้ามตอบ generic ถ้าระบุได้
+Morphology = ${morph}
 
 ตอบ JSON ONLY:
 
 {
  "status":"success",
- "origin_group":"",
- "origin_group_th":"",
- "structure_type":"",
- "structure_type_th":"",
- "pattern_type":"",
- "pattern_type_th":"",
  "breed_estimate":"",
  "breed_estimate_th":"",
+ "betta_group":"",
+ "betta_group_th":"",
  "short_reason":"",
  "confidence":0
 }
@@ -161,39 +135,42 @@ Metallic
 
     /**
      * =====================================================
-     * 🧠 GOD JUDGE LOGIC (ANTI BUG)
+     * 🧠 GOD JUDGE MASTER LOGIC
      * =====================================================
      */
 
     data.morphology = morph;
 
-    // ⭐ Origin Auto Lock
-    if (morph.includes("Wild")) {
-      data.origin_group = "WILD";
-      data.origin_group_th = "สายป่า";
+    const reason = (data.short_reason || "").toLowerCase();
+
+    // ⭐ Elephant Ear Detection
+    if (
+      morph.includes("Elephant") ||
+      reason.includes("หูช้าง")
+    ) {
+      data.morphology =
+        (data.morphology || "") + " Elephant Ear Dumbo";
     }
 
-    // ⭐ Structure Lock จาก Morphology
-    if (morph.includes("Crowntail")) {
-      data.structure_type = "Crowntail";
-      data.structure_type_th = "คราวน์เทล";
-    }
-
+    // ⭐ Halfmoon Rule
     if (morph.includes("Halfmoon")) {
-      data.structure_type = "Halfmoon";
-      data.structure_type_th = "ฮาฟมูน";
+      data.betta_group = "Halfmoon";
+      data.betta_group_th = "ฮาฟมูน";
     }
 
+    // ⭐ Crowntail Rule
+    if (morph.includes("Crowntail")) {
+      data.betta_group = "Crowntail";
+      data.betta_group_th = "คราวน์เทล";
+    }
+
+    // ⭐ Plakat Rule
     if (morph.includes("Short")) {
-      data.structure_type = "Plakat";
-      data.structure_type_th = "ปลากัดครีบสั้น";
+      data.betta_group = "Plakat";
+      data.betta_group_th = "ปลากัดครีบสั้น";
     }
 
-    /**
-     * =====================================================
-     * ⭐ CONFIDENCE NORMALIZE
-     * =====================================================
-     */
+    // ⭐ Confidence Normalize
     let conf = data.confidence ?? 0;
 
     if (typeof conf === "number") {
@@ -208,35 +185,25 @@ Metallic
 
     /**
      * =====================================================
-     * ⭐ COMBINE TH + EN (UI READY)
+     * COMBINE TH + EN
      * =====================================================
      */
-
-    if (data.origin_group && data.origin_group_th) {
-      data.origin_group =
-        `${data.origin_group} (${data.origin_group_th})`;
-    }
-
-    if (data.structure_type && data.structure_type_th) {
-      data.structure_type =
-        `${data.structure_type} (${data.structure_type_th})`;
-    }
-
-    if (data.pattern_type && data.pattern_type_th) {
-      data.pattern_type =
-        `${data.pattern_type} (${data.pattern_type_th})`;
-    }
 
     if (data.breed_estimate && data.breed_estimate_th) {
       data.breed_estimate =
         `${data.breed_estimate} (${data.breed_estimate_th})`;
     }
 
-    console.log("✅ GOD ENGINE V11 RESULT =", data);
+    if (data.betta_group && data.betta_group_th) {
+      data.betta_group =
+        `${data.betta_group} (${data.betta_group_th})`;
+    }
+
+    console.log("✅ GOD ENGINE RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 GOD ENGINE V11 ERROR:", err);
+    console.error("🔥 GOD ENGINE ERROR:", err);
     throw err;
   }
 }
