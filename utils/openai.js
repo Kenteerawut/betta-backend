@@ -5,8 +5,8 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧬 BETTA GOD ENGINE V10 — THAI PRO+
- * Expert Judge Mode
+ * 🧬 BETTA GOD ENGINE V11 — FREE BREED JUDGE
+ * วิเคราะห์ได้ทุกสายพันธุ์ (ไม่ล็อกผลลัพธ์)
  */
 
 export async function analyzeBettaImage({
@@ -14,14 +14,14 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 BETTA GOD V10 START");
+    console.log("🔥 BETTA GOD V11 START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
-     * ==========================================
-     * PASS 1 — MORPHOLOGY CLASSIFIER
-     * ==========================================
+     * ===============================
+     * PASS 1 — MORPHOLOGY SCAN
+     * ===============================
      */
     const classify = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -32,15 +32,16 @@ export async function analyzeBettaImage({
             {
               type: "input_text",
               text: `
-คุณคือ Morphology Classifier
+คุณคือ Morphology Scanner
 
+ตรวจเฉพาะโครงสร้าง:
 Wild Body
 Long Fin
 Short Fin
 Crowntail Spine
 Halfmoon Spread
 
-ตอบ TEXT เท่านั้น
+ตอบ TEXT สั้นที่สุด
 `,
             },
           ],
@@ -60,9 +61,9 @@ Halfmoon Spread
     console.log("🧬 MORPH =", morph);
 
     /**
-     * ==========================================
-     * PASS 2 — EXPERT JUDGE ANALYSIS (THAI PRO+)
-     * ==========================================
+     * ===============================
+     * PASS 2 — EXPERT BREEDER MODE
+     * ===============================
      */
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -74,20 +75,38 @@ Halfmoon Spread
               type: "input_text",
               text: `
 SYSTEM ROLE:
-คุณคือ "ผู้เชี่ยวชาญปลากัดระดับประกวด"
-
-วิเคราะห์เหมือน breeder มืออาชีพ:
-- ใช้ภาษาไทย + อังกฤษ
-- ตั้งชื่อสายพันธุ์แบบคนเลี้ยงใช้จริง
-- วิเคราะห์จากโครงสร้าง หาง สี pattern
+คุณคือกรรมการประกวดปลากัด
 
 Morphology = ${morph}
 
-กฎการวิเคราะห์:
-- Halfmoon ต้องพูดถึง 180 องศา
-- ถ้ามีลายแดง ขาว น้ำเงิน ให้เรียกลายธงชาติ
-- Fancy/Marble ต้องระบุ pattern
-- ห้ามใช้คำ generic ถ้าระบุได้
+กฎสำคัญ:
+
+- วิเคราะห์อิสระ ห้ามยึดสายพันธุ์เดิม
+- ถ้าไม่ใช่ Halfmoon ห้ามเรียก Halfmoon
+- ใช้เหตุผลจาก:
+  tail spread
+  fin length
+  spine
+  pattern
+  color
+
+Candidate Breed Pool:
+
+Halfmoon
+Over Halfmoon
+Crowntail
+Super Delta
+Delta
+Veiltail
+Plakat
+Halfmoon Plakat
+Koi
+Fancy
+Marble
+Dumbo Ear
+Rosetail
+Feathertail
+Wild Betta
 
 ตอบ JSON ONLY:
 
@@ -112,9 +131,9 @@ Morphology = ${morph}
     });
 
     /**
-     * ==========================================
-     * ⭐ SAFE JSON PARSER
-     * ==========================================
+     * ===============================
+     * SAFE JSON PARSER
+     * ===============================
      */
     let data = {};
 
@@ -124,10 +143,7 @@ Morphology = ${morph}
         res.output_text ||
         "{}";
 
-      text = text
-        .replace(/```json/gi, "")
-        .replace(/```/g, "")
-        .trim();
+      text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
 
       data = JSON.parse(text);
     } catch (e) {
@@ -136,43 +152,21 @@ Morphology = ${morph}
     }
 
     /**
-     * ==========================================
-     * 🧠 GOD JUDGE LOGIC
-     * ==========================================
+     * ===============================
+     * 🧠 GOD JUDGE — SMART ADJUST
+     * ===============================
      */
 
     data.morphology = morph;
 
-    const reason = (data.short_reason || "").toLowerCase();
-
-    // ⭐ Wild lock
-    if (morph.includes("Wild")) {
-      data.betta_group = "WILD";
-      data.betta_group_th = "สายป่า";
-    }
-
-    // ⭐ Halfmoon rule
-    if (morph.includes("Halfmoon")) {
-      data.betta_group = "Halfmoon";
-      data.betta_group_th = "ฮาฟมูน";
-    }
-
-    // ⭐ Long fin ห้าม Plakat
-    if (morph.includes("Long") && data.tail_type === "Plakat") {
-      data.tail_type = "Halfmoon";
-    }
-
-    // ⭐ ไม่มีหนาม ห้าม Crowntail
-    if (!reason.includes("หนาม") && data.tail_type === "Crowntail") {
-      data.tail_type = "Domestic";
-    }
+    // ❗ ไม่ override group อีกแล้ว
+    // ปล่อยให้ AI ตัดสินจริง
 
     /**
-     * ==========================================
-     * ⭐ CONFIDENCE NORMALIZE (กัน 9500%)
-     * ==========================================
+     * ===============================
+     * CONFIDENCE NORMALIZE
+     * ===============================
      */
-
     let conf = data.confidence ?? 0;
 
     if (typeof conf === "number") {
@@ -186,11 +180,10 @@ Morphology = ${morph}
     data.confidence = conf;
 
     /**
-     * ==========================================
-     * ⭐ COMBINE TH + EN DISPLAY
-     * ==========================================
+     * ===============================
+     * COMBINE TH + EN
+     * ===============================
      */
-
     if (data.breed_estimate && data.breed_estimate_th) {
       data.breed_estimate =
         `${data.breed_estimate} (${data.breed_estimate_th})`;
