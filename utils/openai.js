@@ -119,7 +119,6 @@ Morphology = ${morph}
      * SAFE JSON PARSER
      * =====================================================
      */
-    let data: any = {};
 
     try {
       let text =
