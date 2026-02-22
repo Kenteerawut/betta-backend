@@ -1,75 +1,3 @@
-import express from "express";
-import multer from "multer";
-import { authRequired } from "../../middleware/auth.middleware.js";
-import { analyzeBettaImage } from "../../utils/openai.js";
-import FishRecord from "../../models/FishRecord.js";
-
-const router = express.Router();
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-});
-
-/**
- * ===============================
- * 🔥 Betta Guard System
- * กัน AI มั่วสายพันธุ์
- * ===============================
- */
-
-const BETTA_ALLOWED = [
-  "betta",
-  "halfmoon",
-  "plakat",
-  "crowntail",
-  "double tail",
-  "wild",
-  "dumbo",
-  "elephant ear",
-];
-
-const FORBIDDEN_FISH = [
-  "goldfish",
-  "guppy",
-  "tetra",
-  "koi",
-  "cichlid",
-];
-
-function sanitizeResult(result) {
-  if (!result) return null;
-
-  let fishName = String(result.fishName || "").toLowerCase();
-
-  // ❌ ถ้าไม่ใช่ปลากัด ตัดทิ้งทันที
-  if (FORBIDDEN_FISH.some((f) => fishName.includes(f))) {
-    return {
-      fishName: "ไม่ใช่ปลากัด",
-      type: "unknown",
-      color: "",
-      answer: "ระบบนี้รองรับเฉพาะปลากัดเท่านั้น",
-    };
-  }
-
-  // ❌ ถ้า AI ไม่พูดคำว่า betta เลย ให้ถือว่าไม่ใช่
-  if (!BETTA_ALLOWED.some((b) => fishName.includes(b))) {
-    return {
-      fishName: "ไม่พบปลากัด",
-      type: "unknown",
-      color: "",
-      answer: "ไม่สามารถยืนยันว่าเป็นปลากัดได้",
-    };
-  }
-
-  return result;
-}
-
-/**
- * ===============================
- * 🚀 Analyze API
- * ===============================
- */
 router.post("/", authRequired, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
@@ -80,40 +8,43 @@ router.post("/", authRequired, upload.single("image"), async (req, res) => {
 
     console.log("🔥 analyze start");
 
-    /**
-     * 🔒 Lock Question Topic (ถามได้เฉพาะปลากัด)
-     */
-    let question = req.body.question || "";
-    if (question && !question.toLowerCase().includes("ปลา")) {
-      question = "ตอบเฉพาะข้อมูลเกี่ยวกับปลากัดเท่านั้น";
-    }
-
-    const aiRaw = await analyzeBettaImage({
+    const ai = await analyzeBettaImage({
       imageBase64: base64Image,
-      question,
+      question: req.body.question || "",
     });
 
-    console.log("🔥 AI RAW:", aiRaw);
+    console.log("🔥 AI RESULT:", ai);
 
-    const result = sanitizeResult(aiRaw);
-
-    if (!result) {
-      return res.status(500).json({
-        error: "ai_no_result",
+    if (!ai || ai.status !== "success") {
+      return res.status(200).json({
+        ok: true,
+        result: {
+          fishName: ai?.breed_estimate || "-",
+          type: ai?.betta_group || "-",
+          color: ai?.morphology || "-",
+          answer: ai?.short_reason || "ไม่สามารถวิเคราะห์ได้",
+          confidence: ai?.confidence || 0,
+        },
       });
     }
 
     /**
-     * ===============================
-     * 💾 Save Record
-     * ===============================
+     * 🔥 MAP ใหม่ให้ตรง FRONTEND
      */
+    const result = {
+      fishName: ai.breed_estimate || "-",
+      type: ai.betta_group || "-",
+      color: ai.morphology || "-",
+      answer: ai.short_reason || "-",
+      confidence: ai.confidence || 0,
+    };
+
     const doc = await FishRecord.create({
       userId: req.user.userId,
-      fishName: result.fishName || "",
-      type: result.type || "",
-      color: result.color || "",
-      note: result.answer || "",
+      fishName: result.fishName,
+      type: result.type,
+      color: result.color,
+      note: result.answer,
       imageName: req.file.originalname,
       imageUrl: "",
     });
@@ -123,6 +54,7 @@ router.post("/", authRequired, upload.single("image"), async (req, res) => {
       result,
       recordId: doc._id,
     });
+
   } catch (err) {
     console.error("🔥 ANALYZE ERROR:", err);
 
@@ -132,5 +64,3 @@ router.post("/", authRequired, upload.single("image"), async (req, res) => {
     });
   }
 });
-
-export default router;
