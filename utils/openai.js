@@ -5,7 +5,11 @@ const openai = new OpenAI({
 });
 
 /**
- * 🧬 BETTA GOD ENGINE V12 — FINAL DEFENSE VERSION (FIXED)
+ * 🧬 BETTA GOD ENGINE V13 — FINAL PRESENTATION VERSION
+ * ✔ Wild lock จริง
+ * ✔ Dumbo detect จริง
+ * ✔ Crowntail ไม่ override Wild
+ * ✔ Decision Tree จริงแบบ breeder
  */
 
 export async function analyzeBettaImage({
@@ -13,14 +17,14 @@ export async function analyzeBettaImage({
   mimeType = "image/jpeg",
 }) {
   try {
-    console.log("🔥 GOD ENGINE V12 START");
+    console.log("🔥 GOD ENGINE V13 START");
 
     const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
 
     /**
-     * =====================================================
+     * ===============================
      * PASS 1 — STRUCTURE DETECTOR
-     * =====================================================
+     * ===============================
      */
     const classify = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -31,17 +35,17 @@ export async function analyzeBettaImage({
             {
               type: "input_text",
               text: `
-คุณคือ Morphology Detector ปลากัด (Breeder Standard)
+คุณคือ Morphology Detector ปลากัดระดับประกวด
 
 ตรวจหา:
-- Wild Body
-- Long Fin
-- Short Fin Plakat
-- Halfmoon Spread 180 Degree
-- Crowntail Spine (web reduction เท่านั้น)
-- Elephant Ear Dumbo (pectoral ใหญ่)
-- Double Tail
-- Rosetail Feather
+Wild Body
+Long Fin
+Short Fin Plakat
+Halfmoon Spread 180 Degree
+Crowntail Spine (web reduction)
+Elephant Ear Dumbo
+Double Tail
+Rosetail Feather
 
 ตอบ TEXT ONLY
 `,
@@ -63,9 +67,9 @@ export async function analyzeBettaImage({
     console.log("🧬 MORPH =", morph);
 
     /**
-     * =====================================================
+     * ===============================
      * PASS 2 — EXPERT JUDGE
-     * =====================================================
+     * ===============================
      */
     const res = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -76,15 +80,14 @@ export async function analyzeBettaImage({
             {
               type: "input_text",
               text: `
-SYSTEM ROLE:
 คุณคือกรรมการปลากัดระดับประกวด
 
-วิเคราะห์แบบ breeder:
-- อย่า lock Fancy/Wild ถ้าไม่ชัด
-- Halfmoon ต้องกล่าวถึง 180 องศา
-- Dumbo = ครีบอกใหญ่ (หูช้าง)
-- Crowntail ต้องมี web reduction
-- Wild ต้องดู body shape ก่อน
+วิเคราะห์ตาม breeder logic:
+- Wild body สำคัญที่สุด
+- Dumbo = ครีบอกใหญ่
+- Crowntail = web reduction จริง
+- Halfmoon = 180 degree
+- Plakat = ครีบสั้น
 
 Morphology = ${morph}
 
@@ -94,8 +97,6 @@ Morphology = ${morph}
  "status":"success",
  "breed_estimate":"",
  "breed_estimate_th":"",
- "betta_group":"",
- "betta_group_th":"",
  "short_reason":"",
  "confidence":0
 }
@@ -111,11 +112,11 @@ Morphology = ${morph}
     });
 
     /**
-     * =====================================================
-     * ⭐ SAFE JSON PARSER (FIX CRASH)
-     * =====================================================
+     * ===============================
+     * SAFE JSON PARSER
+     * ===============================
      */
-    let data = {}; // ⭐ FIX สำคัญมาก
+    let data = {};
 
     try {
       let text =
@@ -131,9 +132,9 @@ Morphology = ${morph}
     }
 
     /**
-     * =====================================================
-     * 🧠 GOD JUDGE PRIORITY SYSTEM
-     * =====================================================
+     * ===============================
+     * 🧠 FINAL DECISION TREE (ของจริง)
+     * ===============================
      */
 
     data.morphology = morph;
@@ -141,37 +142,48 @@ Morphology = ${morph}
     const m = (morph || "").toLowerCase();
     const r = (data.short_reason || "").toLowerCase();
 
-    let groupEN = "";
-    let groupTH = "";
+    let groupEN = "Unknown";
+    let groupTH = "ไม่ทราบ";
 
-    // ⭐ PRIORITY ORDER
-    // Wild > Dumbo > Crowntail > Halfmoon > Plakat
+    /**
+     * PRIORITY จริง:
+     * Wild > Dumbo > Crowntail > Halfmoon > Plakat
+     */
 
+    // ⭐ WILD BODY FIRST
     if (m.includes("wild")) {
       groupEN = "Wild Betta";
       groupTH = "ปลากัดป่า";
-    } else if (m.includes("elephant") || r.includes("หูช้าง")) {
+    }
+
+    // ⭐ DUMBO (หูช้าง)
+    else if (m.includes("elephant") || r.includes("หูช้าง")) {
       groupEN = "Dumbo Elephant Ear";
       groupTH = "หูช้าง";
-    } else if (m.includes("crowntail") && !m.includes("wild")) {
+    }
+
+    // ⭐ CROWNTAIL (ต้องไม่ใช่ wild)
+    else if (m.includes("crowntail") && !m.includes("wild")) {
       groupEN = "Crowntail";
       groupTH = "คราวน์เทล";
-    } else if (m.includes("halfmoon")) {
+    }
+
+    // ⭐ HALFMOON
+    else if (m.includes("halfmoon")) {
       groupEN = "Halfmoon";
       groupTH = "ฮาฟมูน";
-    } else if (m.includes("short")) {
+    }
+
+    // ⭐ PLAKAT
+    else if (m.includes("short")) {
       groupEN = "Plakat";
       groupTH = "ปลากัดครีบสั้น";
     }
 
-    if (groupEN) {
-      data.betta_group = `${groupEN} (${groupTH})`;
-    }
+    data.betta_group = `${groupEN} (${groupTH})`;
 
     /**
-     * =====================================================
-     * ⭐ DUMBO ENHANCE
-     * =====================================================
+     * ⭐ MORPHOLOGY ENHANCE (DUMBO FIX)
      */
     if (m.includes("elephant") || r.includes("หูช้าง")) {
       data.morphology =
@@ -179,9 +191,7 @@ Morphology = ${morph}
     }
 
     /**
-     * =====================================================
      * ⭐ CONFIDENCE NORMALIZE
-     * =====================================================
      */
     let conf = data.confidence ?? 0;
 
@@ -196,20 +206,18 @@ Morphology = ${morph}
     data.confidence = conf;
 
     /**
-     * =====================================================
-     * ⭐ COMBINE TH + EN
-     * =====================================================
+     * ⭐ TH + EN DISPLAY
      */
     if (data.breed_estimate && data.breed_estimate_th) {
       data.breed_estimate =
         `${data.breed_estimate} (${data.breed_estimate_th})`;
     }
 
-    console.log("✅ GOD ENGINE V12 RESULT =", data);
+    console.log("✅ GOD ENGINE V13 RESULT =", data);
 
     return data;
   } catch (err) {
-    console.error("🔥 GOD ENGINE V12 ERROR:", err);
+    console.error("🔥 GOD ENGINE V13 ERROR:", err);
     throw err;
   }
 }
