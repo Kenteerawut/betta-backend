@@ -11,9 +11,8 @@ const router = express.Router();
 
 /**
  * ==============================
- * 🔥 ULTRA FIX — RAILWAY STORAGE
+ * 🔥 RAILWAY SAFE STORAGE
  * ==============================
- * Railway ต้องใช้ /tmp เท่านั้น
  */
 const uploadDir =
   process.env.RAILWAY_ENVIRONMENT
@@ -30,12 +29,15 @@ if (!fs.existsSync(uploadDir)) {
  * ==============================
  */
 const storage = multer.diskStorage({
-  destination: uploadDir,
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
   filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() +
-      "-" +
-      file.originalname.replace(/\s+/g, "_");
+    const safeName = file.originalname
+      .replace(/\s+/g, "_")
+      .replace(/[^\w.-]/g, "");
+
+    const uniqueName = `${Date.now()}-${safeName}`;
 
     cb(null, uniqueName);
   },
@@ -57,23 +59,30 @@ router.post(
   upload.single("image"),
   async (req, res) => {
     try {
+      console.log("🔥 ANALYZE ROUTE HIT");
+
       if (!req.file) {
+        console.log("❌ NO FILE");
         return res.status(400).json({ error: "no_file" });
       }
 
-      console.log("🔥 analyze start");
-
       const filePath = path.join(uploadDir, req.file.filename);
 
-      const base64Image = fs
-        .readFileSync(filePath)
-        .toString("base64");
+      if (!fs.existsSync(filePath)) {
+        console.log("❌ FILE NOT FOUND:", filePath);
+        return res.status(500).json({ error: "file_missing" });
+      }
+
+      const base64Image = fs.readFileSync(filePath).toString("base64");
+
+      console.log("🧠 Sending image to AI...");
 
       const result = await analyzeBettaImage({
         imageBase64: base64Image,
       });
 
       if (!result) {
+        console.log("❌ AI NO RESULT");
         return res.status(500).json({
           error: "ai_no_result",
         });
@@ -89,6 +98,8 @@ router.post(
         note: result.short_reason || "",
         imageName: req.file.filename,
       });
+
+      console.log("✅ RECORD SAVED:", doc._id);
 
       res.json({
         ok: true,
