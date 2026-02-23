@@ -7,19 +7,16 @@ const FishRecordSchema = new mongoose.Schema({
     required: true,
   },
 
+  fishName: String,
+  type: String,
+  note: String,
+
   imageName: {
     type: String,
     required: true,
   },
 
   imageUrl: String,
-
-  // ✅ NEW ENGINE V21 FIELDS
-  fishName: String,       // breed_estimate
-  type: String,           // betta_group
-  note: String,           // short_reason
-
-  color: String,
 
   createdAt: {
     type: Date,
