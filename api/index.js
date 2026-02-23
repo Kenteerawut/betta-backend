@@ -12,7 +12,7 @@ import { connectDB } from "./db.js";
 const app = express();
 
 /**
- * ✅ CORS – รองรับ Railway + Mobile Safari
+ * ✅ CORS
  */
 app.use(
   cors({
@@ -24,10 +24,14 @@ app.use(
 app.use(express.json());
 
 /**
- * 🔥 ULTRA FIX — SERVE UPLOADED IMAGES
- * ถ้าไม่มีบรรทัดนี้ รูปจะไม่ขึ้นหน้า records
+ * 🔥 ULTRA FIX — SERVE IMAGE (RAILWAY SAFE)
  */
-app.use("/uploads", express.static("uploads"));
+const uploadPath =
+  process.env.RAILWAY_ENVIRONMENT
+    ? "/tmp/uploads"
+    : "uploads";
+
+app.use("/uploads", express.static(uploadPath));
 
 /**
  * ✅ Health check

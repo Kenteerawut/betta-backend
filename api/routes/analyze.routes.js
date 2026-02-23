@@ -11,18 +11,22 @@ const router = express.Router();
 
 /**
  * ==============================
- * 📂 CREATE UPLOAD FOLDER
+ * 🔥 ULTRA FIX — RAILWAY STORAGE
  * ==============================
+ * Railway ต้องใช้ /tmp เท่านั้น
  */
-const uploadDir = "uploads";
+const uploadDir =
+  process.env.RAILWAY_ENVIRONMENT
+    ? "/tmp/uploads"
+    : "uploads";
 
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 /**
  * ==============================
- * 📸 MULTER — SAVE FILE TO DISK
+ * 📸 MULTER STORAGE
  * ==============================
  */
 const storage = multer.diskStorage({
@@ -59,8 +63,10 @@ router.post(
 
       console.log("🔥 analyze start");
 
+      const filePath = path.join(uploadDir, req.file.filename);
+
       const base64Image = fs
-        .readFileSync(req.file.path)
+        .readFileSync(filePath)
         .toString("base64");
 
       const result = await analyzeBettaImage({
@@ -74,16 +80,14 @@ router.post(
       }
 
       /**
-       * ✅ SAVE RECORD WITH IMAGE URL
+       * ✅ SAVE RECORD
        */
       const doc = await FishRecord.create({
         userId: req.user.userId,
         fishName: result.breed_estimate || "",
         type: result.betta_group || "",
-        color: "",
         note: result.short_reason || "",
         imageName: req.file.filename,
-        imageUrl: `/uploads/${req.file.filename}`,
       });
 
       res.json({
